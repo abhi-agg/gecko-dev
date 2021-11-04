@@ -19,6 +19,7 @@
 #ifndef wasm_builtins_h
 #define wasm_builtins_h
 
+#include "intgemm/IntGemmIntrinsic.h"
 #include "jit/IonTypes.h"
 #include "wasm/WasmIntrinsicGenerated.h"
 
@@ -256,7 +257,10 @@ extern const SymbolicAddressSignature SASigPushRefIntoExn;
 extern const SymbolicAddressSignature SASigArrayNew;
 extern const SymbolicAddressSignature SASigRefTest;
 extern const SymbolicAddressSignature SASigRttSub;
-extern const SymbolicAddressSignature SASigIntrI8VecMul;
+#define EXT_INTR_SA_DECL(op, export, sa_name, abitype, entry, idx) \
+  extern const SymbolicAddressSignature SASig##sa_name;
+FOR_EACH_INTRINSIC(EXT_INTR_SA_DECL)
+#undef EXT_INTR_SA_DECL
 
 bool IsRoundingFunction(SymbolicAddress callee, jit::RoundingMode* mode);
 

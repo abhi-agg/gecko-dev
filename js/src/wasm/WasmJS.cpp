@@ -5321,8 +5321,8 @@ static bool WebAssembly_mozIntGemm(JSContext* cx, unsigned argc, Value* vp) {
   CallArgs args = CallArgsFromVp(argc, vp);
 
   RootedWasmModuleObject module(cx);
-  if (!wasm::CompileIntrinsicModule(cx, mozilla::Span<IntrinsicOp>(),
-                                    Shareable::True, &module)) {
+  wasm::IntrinsicOp ops[] = {wasm::IntrinsicOp::Sample1};
+  if (!wasm::CompileIntrinsicModule(cx, ops, Shareable::True, &module)) {
     ReportOutOfMemory(cx);
     return false;
   }
@@ -5427,7 +5427,7 @@ static bool WebAssemblyClassFinish(JSContext* cx, HandleObject object,
 #endif
 
 #ifdef ENABLE_WASM_MOZ_INTGEMM
-  if (MozIntGemmAvailable(cx) &&
+  if (/* MozIntGemmAvailable(cx) && */
       !JS_DefineFunctions(cx, wasm, WebAssembly_mozIntGemm_methods)) {
     return false;
   }

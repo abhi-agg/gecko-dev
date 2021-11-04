@@ -15,3 +15,14 @@
     - I32
     - I32
     - I32
+
+# sample1(arr: i32, len: i32)
+- op: Sample1
+  symbolic_address:
+    name: IntrSample1
+    type: Args_Int32_GeneralInt32Int32General
+  entry: intgemm::intrSample1
+  export: sample1
+  params:
+    - I32
+    - I32
