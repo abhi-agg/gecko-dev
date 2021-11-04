@@ -544,6 +544,9 @@ if CONFIG["MOZ_VTUNE"]:
 
 DIRS += ["build", "debugger", "frontend", "gc", "irregexp", "jit", "util", "wasm"]
 
+if CONFIG["INTEL_ARCHITECTURE"]:
+    DIRS += ["intgemm"]
+
 if CONFIG["JS_JITSPEW"]:
     DIRS += ["zydis"]
 

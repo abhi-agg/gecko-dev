@@ -17,6 +17,11 @@ if CONFIG["ENABLE_WASM_CRANELIFT"]:
         "WasmCraneliftCompile.cpp",
     ]
 
+if CONFIG["INTEL_ARCHITECTURE"]:
+    USE_LIBS += [
+        "intgemm",
+    ]
+
 UNIFIED_SOURCES += [
     "AsmJS.cpp",
     "TypedObject.cpp",
