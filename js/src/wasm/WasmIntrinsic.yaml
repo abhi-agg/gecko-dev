@@ -26,3 +26,19 @@
   params:
     - I32
     - I32
+
+# i8PrepareB(const float* input_matrix_B, float scale, float zero_point, uint32_t rows_B, uint32_t cols_B, int8_t* output_matrix_B)
+# i8PrepareB(input_matrix_B: i32, scale: f32, zero_point: f32, rows_B: i32, cols_B: i32, output_matrix_B: i32)
+- op: I8PrepareB
+  symbolic_address:
+    name: IntrI8PrepareB
+    type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareB
+  export: int8_prepare_b
+  params:
+    - I32
+    - F32
+    - F32
+    - I32
+    - I32
+    - I32

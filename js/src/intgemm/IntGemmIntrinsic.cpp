@@ -95,3 +95,58 @@ void Int8PrepareBQuantizedTransposedExport(const int8_t* A, int8_t* output_addr,
 */
 
 
+int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
+             uint32_t input_matrix_B,
+             float scale,
+             float zero_point,
+             uint32_t rows_B,
+             uint32_t cols_B,
+             uint32_t output_matrix_B,
+             uint8_t* memBase) {
+
+  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+
+#if INTGEMM_INTR_SHARED
+  const SharedArrayRawBuffer* rawBuf =
+      SharedArrayRawBuffer::fromDataPtr(memBase);
+  size_t memLen = rawBuf->volatileByteLength();
+  // TODO shall be more carefull with using shared buffer
+#else
+  const WasmArrayRawBuffer* rawBuf = WasmArrayRawBuffer::fromDataPtr(memBase);
+  size_t memLen = rawBuf->byteLength();
+#endif
+
+  // Bounds check and deal with arithmetic overflow for input matrix
+  uint64_t len = (uint64_t)rows_B * (uint64_t)cols_B;
+  uint64_t input_destLimit = uint64_t(input_matrix_B) + len;
+  if (input_destLimit > memLen) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
+  // Bounds check and deal with arithmetic overflow for output matrix
+  uint64_t output_destLimit = uint64_t(output_matrix_B) + len;
+  if (output_destLimit > memLen) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
+  if (len == 0) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
+  // ToDo: Replace this dummy implementation with actual call to PrepareB function of intgemm
+  uint8_t* srcPtr = &memBase[input_matrix_B];
+  uint8_t* destPtr = &memBase[output_matrix_B];
+  for (uint32_t i = 0; i < len; i++) {
+      destPtr[i] = srcPtr[i];
+  }
+  return 0;
+}
