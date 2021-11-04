@@ -15,3 +15,156 @@
     - I32
     - I32
     - I32
+
+# sample1(arr: i32, len: i32)
+- op: Sample1
+  symbolic_address:
+    name: IntrSample1
+    type: Args_Int32_GeneralInt32Int32General
+  entry: intgemm::intrSample1
+  export: sample1
+  params:
+    - I32
+    - I32
+
+# i8PrepareB(const float* inputMatrixB, float scale, float zeroPoint, uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
+# i8PrepareB(inputMatrixB: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
+- op: I8PrepareB
+  symbolic_address:
+    name: IntrI8PrepareB
+    type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareB
+  export: int8_prepare_b
+  params:
+    - I32
+    - F32
+    - F32
+    - I32
+    - I32
+    - I32
+
+# i8PrepareBFromTransposed(const float* inputMatrixBTransposed, float scale, float zeroPoint, uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
+# i8PrepareBFromTransposed(inputMatrixBTransposed: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
+- op: I8PrepareBFromTransposed
+  symbolic_address:
+    name: IntrI8PrepareBFromTransposed
+    type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareBFromTransposed
+  export: int8_prepare_b_from_transposed
+  params:
+    - I32
+    - F32
+    - F32
+    - I32
+    - I32
+    - I32
+
+# i8PrepareBFromQuantizedTransposed(const int8_t* inputMatrixBQuantizedTransposed, uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
+# i8PrepareBFromQuantizedTransposed(inputMatrixBQuantizedTransposed: i32, rowsB: i32, colsB: i32, outputMatrixB: i32)
+- op: I8PrepareBFromQuantizedTransposed
+  symbolic_address:
+    name: IntrI8PrepareBFromQuantizedTransposed
+    type: Args_Int32_GeneralInt32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareBFromQuantizedTransposed
+  export: int8_prepare_b_from_quantized_transposed
+  params:
+    - I32
+    - I32
+    - I32
+    - I32
+
+# i8PrepareA(const float* inputMatrixA, float scale, float zeroPoint, uint32_t rowsA, uint32_t colsA, int8_t* outputMatrixA)
+# i8PrepareA(inputMatrixA: i32, scale: f32, zeroPoint: f32, rowsA: i32, colsA: i32, outputMatrixA: i32)
+- op: I8PrepareA
+  symbolic_address:
+    name: IntrI8PrepareA
+    type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareA
+  export: int8_prepare_a
+  params:
+    - I32
+    - F32
+    - F32
+    - I32
+    - I32
+    - I32
+
+# i8PrepareBias(const int8_t* inputMatrixBPrepared, float scaleA, float zeroPointA, float scaleB, float zeroPointB, uint32_t rowsB, uint32_t colsB, const float* inputBias, float* output)
+# i8PrepareBias(inputMatrixBPrepared: i32, scaleA: f32, zeroPointA: f32, scaleB: f32, zeroPointB: f32, rowsB: i32, colsB: i32, inputBias: i32, output: i32)
+- op: I8PrepareBias
+  symbolic_address:
+    name: IntrI8PrepareBias
+    type: Args_Int32_GeneralInt32Float32Float32Float32Float32Int32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareBias
+  export: int8_prepare_bias
+  params:
+    - I32
+    - F32
+    - F32
+    - F32
+    - F32
+    - I32
+    - I32
+    - I32
+    - I32
+
+# i8MultiplyAndAddBias(const int8_t* inputMatrixAPrepared, float scaleA, float zeroPointA,
+#                      const int8_t* inputMatrixBPrepared, float scaleB, float zeroPointB,
+#                      const float* inputBiasPrepared, float unquantMultiplier,
+#                      uint32_t rowsA, uint32_t width, uint32_t colsB, float* output)
+# i8MultiplyAndAddBias(inputMatrixAPrepared: i32, scaleA: f32, zeroPointA: f32,
+#                      inputMatrixBPrepared: i32, scaleB: f32, zeroPointB: f32,
+#                      inputBiasPrepared: i32, unquantMultiplier: f32,
+#                      rowsA: i32, width: i32, colsB: i32, output: i32)
+- op: I8MultiplyAndAddBias
+  symbolic_address:
+    name: IntrI8MultiplyAndAddBias
+    type: Args_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General
+  entry: intgemm::intrI8MultiplyAndAddBias
+  export: int8_multiply_and_add_bias
+  params:
+    - I32
+    - F32
+    - F32
+    - I32
+    - F32
+    - F32
+    - I32
+    - F32
+    - I32
+    - I32
+    - I32
+    - I32
+
+# The I8MultiplyAndAddBias intrinsic but with reduced no. of arguments (using structure approach)
+# - op: I8MultiplyAndAddBias
+#   symbolic_address:
+#     name: IntrI8MultiplyAndAddBias
+#     type: Args_Int32_GeneralInt32Int32Int32Float32Int32Int32Int32Int32General
+#   entry: intgemm::intrI8MultiplyAndAddBias
+#   export: int8_multiply_and_add_bias
+#   params:
+#     - I32
+#     - I32
+#     - I32
+#     - F32
+#     - I32
+#     - I32
+#     - I32
+#     - I32
+
+# i8SelectColumnsOfB(const int8_t* inputMatrixBPrepared, uint32_t rowsB, uint32_t colsB, const uint32_t* colIndexList, const uint32_t sizeColIndexList, int8_t* output)
+# i8SelectColumnsOfB(inputMatrixBPrepared: i32, rowsB: i32, colsB: i32, colIndexList: i32, sizeColIndexList: i32, output: i32)
+- op: I8SelectColumnsOfB
+  symbolic_address:
+    name: IntrI8SelectColumnsOfB
+    type: Args_Int32_GeneralInt32Int32Int32Int32Int32Int32General
+  entry: intgemm::intrI8SelectColumnsOfB
+  export: int8_select_columns_of_b
+  params:
+    - I32
+    - I32
+    - I32
+    - I32
+    - I32
+    - I32
