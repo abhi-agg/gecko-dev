@@ -71,6 +71,19 @@ namespace intgemm {
              Index colsA,
              uint32_t outputMatrixA,
              uint8_t* memBase);
+
+  // i8PrepareBias(inputMatrixBPrepared: i32, scaleA: f32, zeroPointA: f32, scaleB: f32, zeroPointB: f32, rowsB: i32, colsB: i32, inputBias: i32, output: i32)
+  int32_t intrI8PrepareBias(wasm::Instance* instance,
+             uint32_t inputMatrixBPrepared,
+             float scaleA,
+             float zeroPointA,
+             float scaleB,
+             float zeroPointB,
+             Index rowsB,
+             Index colsB,
+             uint32_t inputBias,
+             uint32_t output,
+             uint8_t* memBase);
 }
 }
 

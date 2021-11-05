@@ -190,3 +190,18 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   // ToDo: Write implementation
   return 0;
 }
+
+int32_t js::intgemm::intrI8PrepareBias(wasm::Instance* instance,
+             uint32_t inputMatrixBPrepared,
+             float scaleA,
+             float zeroPointA,
+             float scaleB,
+             float zeroPointB,
+             Index rowsB,
+             Index colsB,
+             uint32_t inputBias,
+             uint32_t output,
+             uint8_t* memBase) {
+  // ToDo: Write implementation
+  return 0;
+}
