@@ -58,3 +58,17 @@
     - I32
     - I32
     - I32
+
+# i8PrepareBFromQuantizedTransposed(const int8_t* inputMatrixBQuantizedTransposed, uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
+# i8PrepareBFromQuantizedTransposed(inputMatrixBQuantizedTransposed: i32, rowsB: i32, colsB: i32, outputMatrixB: i32)
+- op: I8PrepareBFromQuantizedTransposed
+  symbolic_address:
+    name: IntrI8PrepareBFromQuantizedTransposed
+    type: Args_Int32_GeneralInt32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareBFromQuantizedTransposed
+  export: int8_prepare_b_from_quantized_transposed
+  params:
+    - I32
+    - I32
+    - I32
+    - I32

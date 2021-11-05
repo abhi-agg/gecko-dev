@@ -53,6 +53,14 @@ namespace intgemm {
              Index colsB,
              uint32_t outputMatrixB,
              uint8_t* memBase);
+
+  // i8PrepareBFromQuantizedTransposed(inputMatrixBQuantizedTransposed: i32, rowsB: i32, colsB: i32, outputMatrixB: i32)
+  int32_t intrI8PrepareBFromQuantizedTransposed(wasm::Instance* instance,
+             uint32_t inputMatrixBQuantizedTransposed,
+             Index rowsB,
+             Index colsB,
+             uint32_t outputMatrixB,
+             uint8_t* memBase);
 }
 }
 
