@@ -156,3 +156,15 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                           (Index)colsB);
   return 0;
 }
+
+int32_t js::intgemm::intrI8PrepareBFromTransposed(wasm::Instance* instance,
+             uint32_t inputMatrixBTransposed,
+             float scale,
+             float zeroPoint,
+             Index rowsB,
+             Index colsB,
+             uint32_t outputMatrixB,
+             uint8_t* memBase) {
+  // ToDo: Write implementation
+  return 0;
+}

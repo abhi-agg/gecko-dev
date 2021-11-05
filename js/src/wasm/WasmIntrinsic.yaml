@@ -42,3 +42,19 @@
     - I32
     - I32
     - I32
+
+# i8PrepareBFromTransposed(const float* inputMatrixBTransposed, float scale, float zeroPoint, uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
+# i8PrepareBFromTransposed(inputMatrixBTransposed: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
+- op: I8PrepareBFromTransposed
+  symbolic_address:
+    name: IntrI8PrepareBFromTransposed
+    type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareBFromTransposed
+  export: int8_prepare_b_from_transposed
+  params:
+    - I32
+    - F32
+    - F32
+    - I32
+    - I32
+    - I32
