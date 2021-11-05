@@ -27,8 +27,8 @@
     - I32
     - I32
 
-# i8PrepareB(const float* input_matrix_B, float scale, float zero_point, uint32_t rows_B, uint32_t cols_B, int8_t* output_matrix_B)
-# i8PrepareB(input_matrix_B: i32, scale: f32, zero_point: f32, rows_B: i32, cols_B: i32, output_matrix_B: i32)
+# i8PrepareB(const float* inputMatrixB, float scale, float zeroPoint, uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
+# i8PrepareB(inputMatrixB: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
 - op: I8PrepareB
   symbolic_address:
     name: IntrI8PrepareB

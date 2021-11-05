@@ -27,18 +27,21 @@ namespace wasm {
 }
 
 namespace intgemm {
+  // The data type of rows and cols are dependent on intgemm library.
+  // Please check $TOPSRCDIR/third_party/intgemm/intgemm/intgemm.h
+  using Index = uint32_t;
 
   int32_t intrSample1(wasm::Instance* instance, uint32_t arr,
                                           uint32_t len, uint8_t* memBase);
 
-  // i8PrepareB(input_matrix_B: i32, scale: f32, zero_point: f32, rows_B: i32, cols_B: i32, output_matrix_B: i32)
+  // i8PrepareB(inputMatrixB: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
   int32_t intrI8PrepareB(wasm::Instance* instance,
-             uint32_t input_matrix_B,
+             uint32_t inputMatrixB,
              float scale,
-             float zero_point,
-             uint32_t rows_B,
-             uint32_t cols_B,
-             uint32_t output_matrix_B,
+             float zeroPoint,
+             Index rowsB,
+             Index colsB,
+             uint32_t outputMatrixB,
              uint8_t* memBase);
 }
 }

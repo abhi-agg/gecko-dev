@@ -96,12 +96,12 @@ void Int8PrepareBQuantizedTransposedExport(const int8_t* A, int8_t* output_addr,
 
 
 int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
-             uint32_t input_matrix_B,
+             uint32_t inputMatrixB,
              float scale,
-             float zero_point,
-             uint32_t rows_B,
-             uint32_t cols_B,
-             uint32_t output_matrix_B,
+             float zeroPoint,
+             uint32_t rowsB,
+             uint32_t colsB,
+             uint32_t outputMatrixB,
              uint8_t* memBase) {
 
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
@@ -116,37 +116,43 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   size_t memLen = rawBuf->byteLength();
 #endif
 
-  // Bounds check and deal with arithmetic overflow for input matrix
-  uint64_t len = (uint64_t)rows_B * (uint64_t)cols_B;
-  uint64_t input_destLimit = uint64_t(input_matrix_B) + len;
-  if (input_destLimit > memLen) {
+  // Size of matrix shouldn't be zero
+  uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
+  if (matrixSize == 0) {
     JSContext* cx = TlsContext.get();
+    // ToDo: Some meaningful error message?
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
+  // Bounds check and deal with arithmetic overflow for input matrix
+  // ToDo: Should there be a bound check for inputMatrixB?
+  uint64_t inputDestLimit = uint64_t(inputMatrixB) + matrixSize;
+  if (inputDestLimit > memLen) {
+    JSContext* cx = TlsContext.get();
+    // ToDo: Some meaningful error message?
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
 
   // Bounds check and deal with arithmetic overflow for output matrix
-  uint64_t output_destLimit = uint64_t(output_matrix_B) + len;
-  if (output_destLimit > memLen) {
+  // ToDo: Should there be a bound check for outputMatrixB?
+  uint64_t outputDestLimit = uint64_t(outputMatrixB) + matrixSize;
+  if (outputDestLimit > memLen) {
     JSContext* cx = TlsContext.get();
+    // ToDo: Some meaningful error message?
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
 
-  if (len == 0) {
-    JSContext* cx = TlsContext.get();
-    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                              JSMSG_WASM_OUT_OF_BOUNDS);
-    return -1;
-  }
-
-  // ToDo: Replace this dummy implementation with actual call to PrepareB function of intgemm
-  uint8_t* srcPtr = &memBase[input_matrix_B];
-  uint8_t* destPtr = &memBase[output_matrix_B];
-  for (uint32_t i = 0; i < len; i++) {
-      destPtr[i] = srcPtr[i];
-  }
+  // Actual call to the 3rd party library (intgemm) for Prepare
+  ::intgemm::Int8::PrepareB((const float*)inputMatrixB,
+                          (int8_t*)outputMatrixB,
+                          (float)scale, /*Quant Mult*/
+                          (Index)rowsB,
+                          (Index)colsB);
   return 0;
 }
