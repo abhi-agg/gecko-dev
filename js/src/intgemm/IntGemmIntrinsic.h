@@ -61,6 +61,16 @@ namespace intgemm {
              Index colsB,
              uint32_t outputMatrixB,
              uint8_t* memBase);
+
+  // i8PrepareA(inputMatrixA: i32, scale: f32, zeroPoint: f32, rowsA: i32, colsA: i32, outputMatrixA: i32)
+  int32_t intrI8PrepareA(wasm::Instance* instance,
+             uint32_t inputMatrixA,
+             float scale,
+             float zeroPoint,
+             Index rowsA,
+             Index colsA,
+             uint32_t outputMatrixA,
+             uint8_t* memBase);
 }
 }
 

@@ -72,3 +72,19 @@
     - I32
     - I32
     - I32
+
+# i8PrepareA(const float* inputMatrixA, float scale, float zeroPoint, uint32_t rowsA, uint32_t colsA, int8_t* outputMatrixA)
+# i8PrepareA(inputMatrixA: i32, scale: f32, zeroPoint: f32, rowsA: i32, colsA: i32, outputMatrixA: i32)
+- op: I8PrepareA
+  symbolic_address:
+    name: IntrI8PrepareA
+    type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
+  entry: intgemm::intrI8PrepareA
+  export: int8_prepare_A
+  params:
+    - I32
+    - F32
+    - F32
+    - I32
+    - I32
+    - I32

@@ -178,3 +178,15 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(wasm::Instance* insta
   // ToDo: Write implementation
   return 0;
 }
+
+int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
+             uint32_t inputMatrixA,
+             float scale,
+             float zeroPoint,
+             Index rowsA,
+             Index colsA,
+             uint32_t outputMatrixA,
+             uint8_t* memBase) {
+  // ToDo: Write implementation
+  return 0;
+}
