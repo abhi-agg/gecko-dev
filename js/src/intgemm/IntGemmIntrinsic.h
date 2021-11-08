@@ -84,6 +84,25 @@ namespace intgemm {
              uint32_t inputBias,
              uint32_t output,
              uint8_t* memBase);
+
+// i8MultiplyAndAddBias(inputMatrixAPrepared: i32, scaleA: f32, zeroPointA: f32,
+//                      inputMatrixBPrepared: i32, scaleB: f32, zeroPointB: f32,
+//                      inputBiasPrepared: i32, unquantMultiplier: f32,
+//                      rowsA: i32, width: i32, colsB: i32, output: i32)
+int32_t intrI8MultiplyAndAddBias(wasm::Instance* instance,
+             uint32_t inputMatrixAPrepared,
+             float scaleA,
+             float zeroPointA,
+             uint32_t inputMatrixBPrepared,
+             float scaleB,
+             float zeroPointB,
+             uint32_t inputBiasPrepared,
+             float unquantMultiplier,
+             Index rowsB,
+             Index width,
+             Index colsB,
+             uint32_t output,
+             uint8_t* memBase);
 }
 }
 

@@ -165,7 +165,7 @@ enum class FailureMode : uint8_t {
 // MIRType::None, in the hope of catching any accidental overruns of the
 // defined section of the array.
 
-static constexpr size_t SymbolicAddressSignatureMaxArgs = 11;
+static constexpr size_t SymbolicAddressSignatureMaxArgs = 14;
 
 struct SymbolicAddressSignature {
   // The SymbolicAddress that is described.
@@ -190,7 +190,7 @@ struct SymbolicAddressSignature {
 // worst-plausible-case rounding will take that up to 16.  Hence, the
 // assertion uses 16.
 
-static_assert(sizeof(SymbolicAddressSignature) <= 16,
+static_assert(sizeof(SymbolicAddressSignature) <= 32,
               "SymbolicAddressSignature unexpectedly large");
 
 // These provide argument type information for a subset of the SymbolicAddress

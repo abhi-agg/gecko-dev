@@ -936,6 +936,11 @@ enum ABIFunctionType : uint32_t {
       ArgType_Int32, {ArgType_General, ArgType_Int32, ArgType_Float32, ArgType_Float32,
                       ArgType_Float32, ArgType_Float32, ArgType_Int32, ArgType_Int32,
                       ArgType_Int32, ArgType_Int32, ArgType_General}),
+  Args_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General = detail::MakeABIFunctionType(
+      ArgType_Int32, {ArgType_General, ArgType_Int32, ArgType_Float32, ArgType_Float32,
+                      ArgType_Int32, ArgType_Float32, ArgType_Float32, ArgType_Int32,
+                      ArgType_Float32, ArgType_Int32, ArgType_Int32, ArgType_Int32,
+                      ArgType_Int32, ArgType_General}),
 
   // Functions that return Int64 are tricky because SpiderMonkey's ReturnRegI64
   // does not match the ABI int64 return register on x86.  Wasm only!

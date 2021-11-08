@@ -205,3 +205,21 @@ int32_t js::intgemm::intrI8PrepareBias(wasm::Instance* instance,
   // ToDo: Write implementation
   return 0;
 }
+
+int32_t js::intgemm::intrI8MultiplyAndAddBias(wasm::Instance* instance,
+             uint32_t inputMatrixAPrepared,
+             float scaleA,
+             float zeroPointA,
+             uint32_t inputMatrixBPrepared,
+             float scaleB,
+             float zeroPointB,
+             uint32_t inputBiasPrepared,
+             float unquantMultiplier,
+             Index rowsB,
+             Index width,
+             Index colsB,
+             uint32_t output,
+             uint8_t* memBase) {
+  // ToDo: Write implementation
+  return 0;
+}

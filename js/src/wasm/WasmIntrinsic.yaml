@@ -107,3 +107,31 @@
     - I32
     - I32
     - I32
+
+# i8MultiplyAndAddBias(const int8_t* inputMatrixAPrepared, float scaleA, float zeroPointA,
+#                      const int8_t* inputMatrixBPrepared, float scaleB, float zeroPointB,
+#                      const float* inputBiasPrepared, float unquantMultiplier,
+#                      uint32_t rowsA, uint32_t width, uint32_t colsB, float* output)
+# i8MultiplyAndAddBias(inputMatrixAPrepared: i32, scaleA: f32, zeroPointA: f32,
+#                      inputMatrixBPrepared: i32, scaleB: f32, zeroPointB: f32,
+#                      inputBiasPrepared: i32, unquantMultiplier: f32,
+#                      rowsA: i32, width: i32, colsB: i32, output: i32)
+- op: I8MultiplyAndAddBias
+  symbolic_address:
+    name: IntrI8MultiplyAndAddBias
+    type: Args_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General
+  entry: intgemm::intrI8MultiplyAndAddBias
+  export: int8_prepare_bias
+  params:
+    - I32
+    - F32
+    - F32
+    - I32
+    - F32
+    - F32
+    - I32
+    - F32
+    - I32
+    - I32
+    - I32
+    - I32
