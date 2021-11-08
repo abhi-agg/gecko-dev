@@ -80,7 +80,7 @@
     name: IntrI8PrepareA
     type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
   entry: intgemm::intrI8PrepareA
-  export: int8_prepare_A
+  export: int8_prepare_a
   params:
     - I32
     - F32
@@ -121,7 +121,7 @@
     name: IntrI8MultiplyAndAddBias
     type: Args_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General
   entry: intgemm::intrI8MultiplyAndAddBias
-  export: int8_prepare_bias
+  export: int8_multiply_and_add_bias
   params:
     - I32
     - F32
