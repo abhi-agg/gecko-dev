@@ -741,12 +741,12 @@ enum ABIArgType {
 
 namespace detail {
 
-static constexpr int MakeABIFunctionType(
+static constexpr uint64_t MakeABIFunctionType(
     ABIArgType ret, std::initializer_list<ABIArgType> args) {
-  int abiType = ret << RetType_Shift;
+  uint64_t abiType = (uint64_t)ret << RetType_Shift;
   int i = 1;
   for (auto arg : args) {
-    abiType |= (arg << (ArgType_Shift * i));
+    abiType |= ((uint64_t)arg << (ArgType_Shift * i));
     i++;
   }
   return abiType;
@@ -754,7 +754,7 @@ static constexpr int MakeABIFunctionType(
 
 }  // namespace detail
 
-enum ABIFunctionType : uint32_t {
+enum ABIFunctionType : uint64_t {
   // The enum must be explicitly typed to avoid UB: some validly constructed
   // members are larger than any explicitly declared members.
 
