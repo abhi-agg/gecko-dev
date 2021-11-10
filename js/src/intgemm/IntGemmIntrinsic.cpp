@@ -1,5 +1,9 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "intgemm/IntGemmIntrinsic.h"
-#include <intgemm.h>
+//#include <intgemm.h>
 
 #include <utility>
 
@@ -12,13 +16,13 @@ using namespace js::wasm;
 
 #define INTGEMM_INTR_SHARED 1
 
-int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr,
-                                          uint32_t len, uint8_t* memBase) {
+int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr, uint32_t len,
+                                 uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrSample1.failureMode == FailureMode::FailOnNegI32);
 
-  const int8_t* A = (int8_t*)10;
-  int8_t* output_addr = (int8_t*)calloc(10, sizeof(int8_t));;
-  ::intgemm::Int8::PrepareBQuantizedTransposed(A, output_addr, 5, 6);
+  // const int8_t* A = (int8_t*)10;
+  // int8_t* output_addr = (int8_t*)calloc(10, sizeof(int8_t));;
+  //::intgemm::Int8::PrepareBQuantizedTransposed(A, output_addr, 5, 6);
 
 #if INTGEMM_INTR_SHARED
   const SharedArrayRawBuffer* rawBuf =
@@ -41,7 +45,7 @@ int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr,
   if (len == 0) return 0;
   uint8_t* destPtr = &memBase[arr];
   for (uint32_t i = 0, j = len - 1; i < j; i++, j--) {
-      std::swap(destPtr[i], destPtr[j]);
+    std::swap(destPtr[i], destPtr[j]);
   }
 
   return 0;
@@ -94,16 +98,11 @@ void Int8PrepareBQuantizedTransposedExport(const int8_t* A, int8_t* output_addr,
 }
 */
 
-
 int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
-             uint32_t inputMatrixB,
-             float scale,
-             float zeroPoint,
-             uint32_t rowsB,
-             uint32_t colsB,
-             uint32_t outputMatrixB,
-             uint8_t* memBase) {
-
+                                    uint32_t inputMatrixB, float scale,
+                                    float zeroPoint, uint32_t rowsB,
+                                    uint32_t colsB, uint32_t outputMatrixB,
+                                    uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
 #if INTGEMM_INTR_SHARED
@@ -149,77 +148,50 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   }
 
   // Actual call to the 3rd party library (intgemm) for Prepare
-  ::intgemm::Int8::PrepareB((const float*)inputMatrixB,
+  /*::intgemm::Int8::PrepareB((const float*)inputMatrixB,
                           (int8_t*)outputMatrixB,
-                          (float)scale, /*Quant Mult*/
+                          (float)scale, //Quant Mult
                           (Index)rowsB,
-                          (Index)colsB);
+                          (Index)colsB);*/
   return 0;
 }
 
-int32_t js::intgemm::intrI8PrepareBFromTransposed(wasm::Instance* instance,
-             uint32_t inputMatrixBTransposed,
-             float scale,
-             float zeroPoint,
-             Index rowsB,
-             Index colsB,
-             uint32_t outputMatrixB,
-             uint8_t* memBase) {
+int32_t js::intgemm::intrI8PrepareBFromTransposed(
+    wasm::Instance* instance, uint32_t inputMatrixBTransposed, float scale,
+    float zeroPoint, Index rowsB, Index colsB, uint32_t outputMatrixB,
+    uint8_t* memBase) {
   // ToDo: Write implementation
   return 0;
 }
 
-int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(wasm::Instance* instance,
-             uint32_t inputMatrixBQuantizedTransposed,
-             Index rowsB,
-             Index colsB,
-             uint32_t outputMatrixB,
-             uint8_t* memBase) {
+int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
+    wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
+    Index rowsB, Index colsB, uint32_t outputMatrixB, uint8_t* memBase) {
   // ToDo: Write implementation
   return 0;
 }
 
 int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
-             uint32_t inputMatrixA,
-             float scale,
-             float zeroPoint,
-             Index rowsA,
-             Index colsA,
-             uint32_t outputMatrixA,
-             uint8_t* memBase) {
+                                    uint32_t inputMatrixA, float scale,
+                                    float zeroPoint, Index rowsA, Index colsA,
+                                    uint32_t outputMatrixA, uint8_t* memBase) {
   // ToDo: Write implementation
   return 0;
 }
 
-int32_t js::intgemm::intrI8PrepareBias(wasm::Instance* instance,
-             uint32_t inputMatrixBPrepared,
-             float scaleA,
-             float zeroPointA,
-             float scaleB,
-             float zeroPointB,
-             Index rowsB,
-             Index colsB,
-             uint32_t inputBias,
-             uint32_t output,
-             uint8_t* memBase) {
+int32_t js::intgemm::intrI8PrepareBias(
+    wasm::Instance* instance, uint32_t inputMatrixBPrepared, float scaleA,
+    float zeroPointA, float scaleB, float zeroPointB, Index rowsB, Index colsB,
+    uint32_t inputBias, uint32_t output, uint8_t* memBase) {
   // ToDo: Write implementation
   return 0;
 }
 
-int32_t js::intgemm::intrI8MultiplyAndAddBias(wasm::Instance* instance,
-             uint32_t inputMatrixAPrepared,
-             float scaleA,
-             float zeroPointA,
-             uint32_t inputMatrixBPrepared,
-             float scaleB,
-             float zeroPointB,
-             uint32_t inputBiasPrepared,
-             float unquantMultiplier,
-             Index rowsA,
-             Index width,
-             Index colsB,
-             uint32_t output,
-             uint8_t* memBase) {
+int32_t js::intgemm::intrI8MultiplyAndAddBias(
+    wasm::Instance* instance, uint32_t inputMatrixAPrepared, float scaleA,
+    float zeroPointA, uint32_t inputMatrixBPrepared, float scaleB,
+    float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
+    Index rowsA, Index width, Index colsB, uint32_t output, uint8_t* memBase) {
   // ToDo: Write implementation
   return 0;
 }

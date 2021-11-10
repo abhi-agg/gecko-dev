@@ -23,87 +23,62 @@
 
 namespace js {
 namespace wasm {
-  class Instance;
+class Instance;
 }
 
 namespace intgemm {
-  // The data type of rows and cols are dependent on intgemm library.
-  // Please check $TOPSRCDIR/third_party/intgemm/intgemm/intgemm.h
-  using Index = uint32_t;
+// The data type of rows and cols are dependent on intgemm library.
+// Please check $TOPSRCDIR/third_party/intgemm/intgemm/intgemm.h
+using Index = uint32_t;
 
-  int32_t intrSample1(wasm::Instance* instance, uint32_t arr,
-                                          uint32_t len, uint8_t* memBase);
+int32_t intrSample1(wasm::Instance* instance, uint32_t arr, uint32_t len,
+                    uint8_t* memBase);
 
-  // i8PrepareB(inputMatrixB: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
-  int32_t intrI8PrepareB(wasm::Instance* instance,
-             uint32_t inputMatrixB,
-             float scale,
-             float zeroPoint,
-             Index rowsB,
-             Index colsB,
-             uint32_t outputMatrixB,
-             uint8_t* memBase);
+// i8PrepareB(inputMatrixB: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB:
+// i32, outputMatrixB: i32)
+int32_t intrI8PrepareB(wasm::Instance* instance, uint32_t inputMatrixB,
+                       float scale, float zeroPoint, Index rowsB, Index colsB,
+                       uint32_t outputMatrixB, uint8_t* memBase);
 
-  // i8PrepareBFromTransposed(inputMatrixBTransposed: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
-  int32_t intrI8PrepareBFromTransposed(wasm::Instance* instance,
-             uint32_t inputMatrixBTransposed,
-             float scale,
-             float zeroPoint,
-             Index rowsB,
-             Index colsB,
-             uint32_t outputMatrixB,
-             uint8_t* memBase);
+// i8PrepareBFromTransposed(inputMatrixBTransposed: i32, scale: f32, zeroPoint:
+// f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
+int32_t intrI8PrepareBFromTransposed(wasm::Instance* instance,
+                                     uint32_t inputMatrixBTransposed,
+                                     float scale, float zeroPoint, Index rowsB,
+                                     Index colsB, uint32_t outputMatrixB,
+                                     uint8_t* memBase);
 
-  // i8PrepareBFromQuantizedTransposed(inputMatrixBQuantizedTransposed: i32, rowsB: i32, colsB: i32, outputMatrixB: i32)
-  int32_t intrI8PrepareBFromQuantizedTransposed(wasm::Instance* instance,
-             uint32_t inputMatrixBQuantizedTransposed,
-             Index rowsB,
-             Index colsB,
-             uint32_t outputMatrixB,
-             uint8_t* memBase);
+// i8PrepareBFromQuantizedTransposed(inputMatrixBQuantizedTransposed: i32,
+// rowsB: i32, colsB: i32, outputMatrixB: i32)
+int32_t intrI8PrepareBFromQuantizedTransposed(
+    wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
+    Index rowsB, Index colsB, uint32_t outputMatrixB, uint8_t* memBase);
 
-  // i8PrepareA(inputMatrixA: i32, scale: f32, zeroPoint: f32, rowsA: i32, colsA: i32, outputMatrixA: i32)
-  int32_t intrI8PrepareA(wasm::Instance* instance,
-             uint32_t inputMatrixA,
-             float scale,
-             float zeroPoint,
-             Index rowsA,
-             Index colsA,
-             uint32_t outputMatrixA,
-             uint8_t* memBase);
+// i8PrepareA(inputMatrixA: i32, scale: f32, zeroPoint: f32, rowsA: i32, colsA:
+// i32, outputMatrixA: i32)
+int32_t intrI8PrepareA(wasm::Instance* instance, uint32_t inputMatrixA,
+                       float scale, float zeroPoint, Index rowsA, Index colsA,
+                       uint32_t outputMatrixA, uint8_t* memBase);
 
-  // i8PrepareBias(inputMatrixBPrepared: i32, scaleA: f32, zeroPointA: f32, scaleB: f32, zeroPointB: f32, rowsB: i32, colsB: i32, inputBias: i32, output: i32)
-  int32_t intrI8PrepareBias(wasm::Instance* instance,
-             uint32_t inputMatrixBPrepared,
-             float scaleA,
-             float zeroPointA,
-             float scaleB,
-             float zeroPointB,
-             Index rowsB,
-             Index colsB,
-             uint32_t inputBias,
-             uint32_t output,
-             uint8_t* memBase);
+// i8PrepareBias(inputMatrixBPrepared: i32, scaleA: f32, zeroPointA: f32,
+// scaleB: f32, zeroPointB: f32, rowsB: i32, colsB: i32, inputBias: i32, output:
+// i32)
+int32_t intrI8PrepareBias(wasm::Instance* instance,
+                          uint32_t inputMatrixBPrepared, float scaleA,
+                          float zeroPointA, float scaleB, float zeroPointB,
+                          Index rowsB, Index colsB, uint32_t inputBias,
+                          uint32_t output, uint8_t* memBase);
 
 // i8MultiplyAndAddBias(inputMatrixAPrepared: i32, scaleA: f32, zeroPointA: f32,
 //                      inputMatrixBPrepared: i32, scaleB: f32, zeroPointB: f32,
 //                      inputBiasPrepared: i32, unquantMultiplier: f32,
 //                      rowsA: i32, width: i32, colsB: i32, output: i32)
-int32_t intrI8MultiplyAndAddBias(wasm::Instance* instance,
-             uint32_t inputMatrixAPrepared,
-             float scaleA,
-             float zeroPointA,
-             uint32_t inputMatrixBPrepared,
-             float scaleB,
-             float zeroPointB,
-             uint32_t inputBiasPrepared,
-             float unquantMultiplier,
-             Index rowsA,
-             Index width,
-             Index colsB,
-             uint32_t output,
-             uint8_t* memBase);
-}
-}
+int32_t intrI8MultiplyAndAddBias(
+    wasm::Instance* instance, uint32_t inputMatrixAPrepared, float scaleA,
+    float zeroPointA, uint32_t inputMatrixBPrepared, float scaleB,
+    float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
+    Index rowsA, Index width, Index colsB, uint32_t output, uint8_t* memBase);
+}  // namespace intgemm
+}  // namespace js
 
-#endif // intgemm_intrinsic
+#endif  // intgemm_intrinsic
