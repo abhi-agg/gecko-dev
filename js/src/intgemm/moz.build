@@ -6,8 +6,8 @@
 
 FINAL_LIBRARY = "js"
 
-with Files('*'):
-    BUG_COMPONENT = ('Core', 'JavaScript: WebAssembly')
+with Files("*"):
+    BUG_COMPONENT = ("Core", "JavaScript: WebAssembly")
 
 LOCAL_INCLUDES += [
     "!..",
@@ -15,5 +15,5 @@ LOCAL_INCLUDES += [
 ]
 
 SOURCES += [
-    'IntGemmIntrinsic.cpp',
+    "IntGemmIntrinsic.cpp",
 ]
