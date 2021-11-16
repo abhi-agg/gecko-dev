@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "intgemm/IntGemmIntrinsic.h"
-//#include <intgemm.h>
+#include <intgemm.h>
 
 #include <utility>
 
@@ -96,12 +96,10 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
     return -1;
   }
 
-  // Actual call to the 3rd party library (intgemm) for Prepare
-  /*::intgemm::Int8::PrepareB((const float*)inputMatrixB,
-                          (int8_t*)outputMatrixB,
-                          (float)scale, //Quant Mult
-                          (Index)rowsB,
-                          (Index)colsB);*/
+  // Actual call to the 3rd party library (intgemm) for PrepareB
+  ::intgemm::Int8::PrepareB((const float*)inputMatrixB, (int8_t*)outputMatrixB,
+                            (float)scale,  // Quant Mult
+                            (Index)rowsB, (Index)colsB);
   return 0;
 }
 
@@ -109,14 +107,18 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBTransposed, float scale,
     float zeroPoint, Index rowsB, Index colsB, uint32_t outputMatrixB,
     uint8_t* memBase) {
-  // ToDo: Write implementation
-  return 0;
+  // JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+  //                             JSMSG_WASM_OUT_OF_BOUNDS);
+  return -1;
 }
 
 int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
     Index rowsB, Index colsB, uint32_t outputMatrixB, uint8_t* memBase) {
   // ToDo: Write implementation
+  ::intgemm::Int8::PrepareBQuantizedTransposed(
+      (const int8_t*)inputMatrixBQuantizedTransposed, (int8_t*)outputMatrixB,
+      (Index)rowsB, (Index)colsB);
   return 0;
 }
 
@@ -125,6 +127,9 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
                                     float zeroPoint, Index rowsA, Index colsA,
                                     uint32_t outputMatrixA, uint8_t* memBase) {
   // ToDo: Write implementation
+  ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixA,
+                                 (int8_t*)outputMatrixA, scale, (Index)rowsA,
+                                 (Index)colsA);
   return 0;
 }
 
@@ -133,6 +138,12 @@ int32_t js::intgemm::intrI8PrepareBias(
     float zeroPointA, float scaleB, float zeroPointB, Index rowsB, Index colsB,
     uint32_t inputBias, uint32_t output, uint8_t* memBase) {
   // ToDo: Write implementation
+  float unquantFactor =
+      (-1) * ((127.0f / scaleA) * (127.0f / scaleB)) / (127.0f);
+  ::intgemm::Int8Shift::PrepareBias(
+      (const int8_t*)inputMatrixBPrepared, (Index)rowsB, (Index)colsB,
+      ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
+          unquantFactor, (const float*)inputBias, (float*)output));
   return 0;
 }
 
@@ -142,6 +153,12 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
     Index rowsA, Index width, Index colsB, uint32_t output, uint8_t* memBase) {
   // ToDo: Write implementation
+  float unquantFactor = unquantMultiplier / (scaleA * scaleB);
+  ::intgemm::Int8Shift::Multiply(
+      (const int8_t*)inputMatrixAPrepared, (const int8_t*)inputMatrixBPrepared,
+      (Index)rowsA, (Index)width, (Index)colsB,
+      ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
+          unquantFactor, (const float*)inputBiasPrepared, (float*)output));
   return 0;
 }
 
@@ -152,5 +169,8 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             const Index sizeColIndexList,
                                             uint32_t output, uint8_t* memBase) {
   // ToDo: Write implementation
+  ::intgemm::Int8::SelectColumnsB((const int8_t*)inputMatrixBPrepared,
+                                  (int8_t*)output, (Index)rowsB, colIndexList,
+                                  colIndexList + sizeColIndexList);
   return 0;
 }
