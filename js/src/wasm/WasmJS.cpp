@@ -5330,7 +5330,7 @@ static bool WebAssembly_mozIntGemm(JSContext* cx, unsigned argc, Value* vp) {
       wasm::IntrinsicOp::I8PrepareBias,
       wasm::IntrinsicOp::I8MultiplyAndAddBias,
       wasm::IntrinsicOp::I8SelectColumnsOfB};
-  if (!wasm::CompileIntrinsicModule(cx, ops, Shareable::True, &module)) {
+  if (!wasm::CompileIntrinsicModule(cx, ops, Shareable::False, &module)) {
     ReportOutOfMemory(cx);
     return false;
   }

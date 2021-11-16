@@ -14,7 +14,7 @@
 
 using namespace js::wasm;
 
-#define INTGEMM_INTR_SHARED 1
+#define INTGEMM_INTR_SHARED 0
 
 int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr, uint32_t len,
                                  uint8_t* memBase) {
