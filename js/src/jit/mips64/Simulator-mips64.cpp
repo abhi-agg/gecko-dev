@@ -2309,6 +2309,14 @@ void Simulator::softwareInterrupt(SimInstruction* instr) {
         setRegister(v0, I64(ret));
         break;
       }
+      case Args_Int32_GeneralInt32Int32Int32Int32Int32Int32General: {
+        int32_t ret = reinterpret_cast<
+            Prototype_Int32_GeneralInt32Int32Int32Int32Int32Int32General>(
+            nativeFn)(arg0, I32(arg1), I32(arg2), I32(arg3), I32(arg4),
+                      I32(arg5), I32(arg6), arg7);
+        setRegister(v0, I64(ret));
+        break;
+      }
       case Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General: {
         int32_t ret = reinterpret_cast<
             Prototype_Int32_GeneralInt32Float32Float32Int32Int32Int32General>(

@@ -844,6 +844,13 @@ Simulator::VisitCallRedirection(const Instruction* instr)
       setGPR32Result(ret);
       break;
     }
+    case js::jit::Args_Int32_GeneralInt32Int32Int32Int32Int32Int32General: {
+      int32_t ret =
+          reinterpret_cast<Prototype_Int32_GeneralInt32Int32Int32Int32Int32Int32General>(
+              nativeFn)(x0, x1, x2, x3, x4, x5, x6, x7);
+      setGPR32Result(ret);
+      break;
+    }
     case js::jit::Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General: {
       int32_t ret =
           reinterpret_cast<Prototype_Int32_GeneralInt32Float32Float32Int32Int32Int32General>(

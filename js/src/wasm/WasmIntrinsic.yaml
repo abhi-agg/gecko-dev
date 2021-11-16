@@ -135,3 +135,19 @@
     - I32
     - I32
     - I32
+
+# i8SelectColumnsOfB(const int8_t* inputMatrixBPrepared, uint32_t rowsB, uint32_t colsB, const uint32_t* colIndexList, const uint32_t sizeColIndexList, int8_t* output)
+# i8SelectColumnsOfB(inputMatrixBPrepared: i32, rowsB: i32, colsB: i32, colIndexList: i32, sizeColIndexList: i32, output: i32)
+- op: I8SelectColumnsOfB
+  symbolic_address:
+    name: IntrI8SelectColumnsOfB
+    type: Args_Int32_GeneralInt32Int32Int32Int32Int32Int32General
+  entry: intgemm::intrI8SelectColumnsOfB
+  export: int8_select_columns_of_b
+  params:
+    - I32
+    - I32
+    - I32
+    - I32
+    - I32
+    - I32

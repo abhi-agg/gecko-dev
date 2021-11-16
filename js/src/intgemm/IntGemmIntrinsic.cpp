@@ -195,3 +195,13 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   // ToDo: Write implementation
   return 0;
 }
+
+int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
+                                            const int8_t* inputMatrixBPrepared,
+                                            Index rowsB, Index colsB,
+                                            const Index* colIndexList,
+                                            const Index sizeColIndexList,
+                                            uint32_t output, uint8_t* memBase) {
+  // ToDo: Write implementation
+  return 0;
+}
