@@ -96,8 +96,10 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
     return -1;
   }
 
+  uint8_t* inputMatrixBPtr = &memBase[inputMatrixB];
+  uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
   // Actual call to the 3rd party library (intgemm) for PrepareB
-  ::intgemm::Int8::PrepareB((const float*)inputMatrixB, (int8_t*)outputMatrixB,
+  ::intgemm::Int8::PrepareB((const float*)inputMatrixBPtr, (int8_t*)outputMatrixBPtr,
                             (float)scale,  // Quant Mult
                             (Index)rowsB, (Index)colsB);
   return 0;
@@ -116,8 +118,10 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
     Index rowsB, Index colsB, uint32_t outputMatrixB, uint8_t* memBase) {
   // ToDo: Write implementation
+  uint8_t* inputMatrixBQuantizedTransposedPtr = &memBase[inputMatrixBQuantizedTransposed];
+  uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
   ::intgemm::Int8::PrepareBQuantizedTransposed(
-      (const int8_t*)inputMatrixBQuantizedTransposed, (int8_t*)outputMatrixB,
+      (const int8_t*)inputMatrixBQuantizedTransposedPtr, (int8_t*)outputMatrixBPtr,
       (Index)rowsB, (Index)colsB);
   return 0;
 }
@@ -127,8 +131,10 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
                                     float zeroPoint, Index rowsA, Index colsA,
                                     uint32_t outputMatrixA, uint8_t* memBase) {
   // ToDo: Write implementation
-  ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixA,
-                                 (int8_t*)outputMatrixA, scale, (Index)rowsA,
+  uint8_t* inputMatrixAPtr = &memBase[inputMatrixA];
+  uint8_t* outputMatrixAPtr = &memBase[outputMatrixA];
+  ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixAPtr,
+                                 (int8_t*)outputMatrixAPtr, scale, (Index)rowsA,
                                  (Index)colsA);
   return 0;
 }
@@ -138,12 +144,15 @@ int32_t js::intgemm::intrI8PrepareBias(
     float zeroPointA, float scaleB, float zeroPointB, Index rowsB, Index colsB,
     uint32_t inputBias, uint32_t output, uint8_t* memBase) {
   // ToDo: Write implementation
+  uint8_t* inputMatrixBPreparedPtr = &memBase[inputMatrixBPrepared];
+  uint8_t* inputBiasPtr = &memBase[inputBias];
+  uint8_t* outputPtr = &memBase[output];
   float unquantFactor =
       (-1) * ((127.0f / scaleA) * (127.0f / scaleB)) / (127.0f);
   ::intgemm::Int8Shift::PrepareBias(
-      (const int8_t*)inputMatrixBPrepared, (Index)rowsB, (Index)colsB,
+      (const int8_t*)inputMatrixBPreparedPtr, (Index)rowsB, (Index)colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-          unquantFactor, (const float*)inputBias, (float*)output));
+          unquantFactor, (const float*)inputBiasPtr, (float*)outputPtr));
   return 0;
 }
 
@@ -153,12 +162,16 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
     Index rowsA, Index width, Index colsB, uint32_t output, uint8_t* memBase) {
   // ToDo: Write implementation
+  uint8_t* inputMatrixAPreparedPtr = &memBase[inputMatrixAPrepared];
+  uint8_t* inputMatrixBPreparedPtr = &memBase[inputMatrixBPrepared];
+  uint8_t* inputBiasPreparedPtr = &memBase[inputBiasPrepared];
+  uint8_t* outputPtr = &memBase[output];
   float unquantFactor = unquantMultiplier / (scaleA * scaleB);
   ::intgemm::Int8Shift::Multiply(
-      (const int8_t*)inputMatrixAPrepared, (const int8_t*)inputMatrixBPrepared,
+      (const int8_t*)inputMatrixAPreparedPtr, (const int8_t*)inputMatrixBPreparedPtr,
       (Index)rowsA, (Index)width, (Index)colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-          unquantFactor, (const float*)inputBiasPrepared, (float*)output));
+          unquantFactor, (const float*)inputBiasPreparedPtr, (float*)outputPtr));
   return 0;
 }
 
@@ -168,8 +181,11 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                Index sizeColIndexList, uint32_t output,
                                uint8_t* memBase) {
   // ToDo: Write implementation
-  ::intgemm::Int8::SelectColumnsB((const int8_t*)inputMatrixBPrepared,
-                                  (int8_t*)output, (Index)rowsB, colIndexList,
-                                  colIndexList + sizeColIndexList);
+  uint8_t* inputMatrixBPreparedPtr = &memBase[inputMatrixBPrepared];
+  uint8_t* colIndexListPtr = &memBase[colIndexList];
+  uint8_t* outputPtr = &memBase[output];
+  ::intgemm::Int8::SelectColumnsB((const int8_t*)inputMatrixBPreparedPtr,
+                                  (int8_t*)outputPtr, (Index)rowsB, (const Index*)colIndexListPtr,
+                                  (const Index*)colIndexListPtr + sizeColIndexList);
   return 0;
 }
