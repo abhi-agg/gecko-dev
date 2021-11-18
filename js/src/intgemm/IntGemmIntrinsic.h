@@ -82,9 +82,9 @@ int32_t intrI8MultiplyAndAddBias(
 // i8SelectColumnsOfB(inputMatrixBPrepared: i32, rowsB: i32, colsB: i32,
 // colIndexList: i32, sizeColIndexList: i32, output: i32)
 int32_t intrI8SelectColumnsOfB(wasm::Instance* instance,
-                               const int8_t* inputMatrixBPrepared, Index rowsB,
-                               Index colsB, const Index* colIndexList,
-                               const Index sizeColIndexList, uint32_t output,
+                               uint32_t inputMatrixBPrepared, Index rowsB,
+                               Index colsB, Index colIndexList,
+                               Index sizeColIndexList, uint32_t output,
                                uint8_t* memBase);
 
 }  // namespace intgemm
