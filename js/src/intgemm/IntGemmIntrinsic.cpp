@@ -21,6 +21,17 @@ namespace mozilla {
 }
 #define INTGEMM_INTR_SHARED 0
 
+const WasmArrayRawBuffer* getWasmArrayRawBuffer(uint8_t* memBase) {
+  #if INTGEMM_INTR_SHARED
+    const SharedArrayRawBuffer* rawBuf =
+        SharedArrayRawBuffer::fromDataPtr(memBase);
+    size_t memLen = rawBuf->volatileByteLength();
+    // TODO shall be more carefull with using shared buffer
+  #else
+    return WasmArrayRawBuffer::fromDataPtr(memBase);
+  #endif
+}
+
 int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr, uint32_t len,
                                  uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrSample1.failureMode == FailureMode::FailOnNegI32);
@@ -60,15 +71,8 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   fprintf(stderr, "intrI8PrepareB called with inputMatrixB:%d outputMatrixB:%d\n", inputMatrixB, outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-#if INTGEMM_INTR_SHARED
-  const SharedArrayRawBuffer* rawBuf =
-      SharedArrayRawBuffer::fromDataPtr(memBase);
-  size_t memLen = rawBuf->volatileByteLength();
-  // TODO shall be more carefull with using shared buffer
-#else
-  const WasmArrayRawBuffer* rawBuf = WasmArrayRawBuffer::fromDataPtr(memBase);
+  const WasmArrayRawBuffer* rawBuf = getWasmArrayRawBuffer(memBase);
   size_t memLen = rawBuf->byteLength();
-#endif
 
   // Size of matrix shouldn't be zero
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
