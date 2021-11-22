@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "intgemm/IntGemmIntrinsic.h"
+#include "mozilla/Logging.h"
 #include <intgemm.h>
 
 #include <utility>
@@ -14,6 +15,10 @@
 
 using namespace js::wasm;
 
+namespace mozilla {
+  static mozilla::LazyLogModule gIntGemmLog("IntGemmLog");
+  #define LOG(level, ...) MOZ_LOG(gIntGemmLog, mozilla::LogLevel::level, (__VA_ARGS__))
+}
 #define INTGEMM_INTR_SHARED 0
 
 int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr, uint32_t len,
@@ -52,6 +57,7 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                                     float zeroPoint, uint32_t rowsB,
                                     uint32_t colsB, uint32_t outputMatrixB,
                                     uint8_t* memBase) {
+  LOG(Info, "intrI8PrepareB called with inputMatrixB:%d outputMatrixB:%d\n", inputMatrixB, outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
 #if INTGEMM_INTR_SHARED
@@ -99,10 +105,12 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   uint8_t* inputMatrixBPtr = &memBase[inputMatrixB];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
   // Actual call to the 3rd party library (intgemm) for PrepareB
+  LOG(Info, "Calling Int8::PrepareB");
   ::intgemm::Int8::PrepareB((const float*)inputMatrixBPtr,
                             (int8_t*)outputMatrixBPtr,
                             (float)scale,  // Quant Mult
                             (Index)rowsB, (Index)colsB);
+  LOG(Info, "Done Int8::PrepareB");
   return 0;
 }
 
@@ -122,9 +130,11 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   uint8_t* inputMatrixBQuantizedTransposedPtr =
       &memBase[inputMatrixBQuantizedTransposed];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
+  LOG(Info, "Calling Int8::PrepareBQuantizedTransposed");
   ::intgemm::Int8::PrepareBQuantizedTransposed(
       (const int8_t*)inputMatrixBQuantizedTransposedPtr,
       (int8_t*)outputMatrixBPtr, (Index)rowsB, (Index)colsB);
+  LOG(Info, "Done Int8::PrepareBQuantizedTransposed");
   return 0;
 }
 
@@ -135,9 +145,11 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   // ToDo: Write implementation
   uint8_t* inputMatrixAPtr = &memBase[inputMatrixA];
   uint8_t* outputMatrixAPtr = &memBase[outputMatrixA];
+  LOG(Info, "Calling Int8Shift::PrepareA");
   ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixAPtr,
                                  (int8_t*)outputMatrixAPtr, scale, (Index)rowsA,
                                  (Index)colsA);
+  LOG(Info, "Done Int8Shift::PrepareA");
   return 0;
 }
 
@@ -151,10 +163,12 @@ int32_t js::intgemm::intrI8PrepareBias(
   uint8_t* outputPtr = &memBase[output];
   float unquantFactor =
       (-1) * ((127.0f / scaleA) * (127.0f / scaleB)) / (127.0f);
+  LOG(Info, "Calling Int8Shift::PrepareBias");
   ::intgemm::Int8Shift::PrepareBias(
       (const int8_t*)inputMatrixBPreparedPtr, (Index)rowsB, (Index)colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPtr, (float*)outputPtr));
+  LOG(Info, "Done Int8Shift::PrepareBias");
   return 0;
 }
 
@@ -169,6 +183,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   uint8_t* inputBiasPreparedPtr = &memBase[inputBiasPrepared];
   uint8_t* outputPtr = &memBase[output];
   float unquantFactor = unquantMultiplier / (scaleA * scaleB);
+  LOG(Info, "Calling Int8Shift::Multiply");
   ::intgemm::Int8Shift::Multiply(
       (const int8_t*)inputMatrixAPreparedPtr,
       (const int8_t*)inputMatrixBPreparedPtr, (Index)rowsA, (Index)width,
@@ -176,6 +191,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPreparedPtr,
           (float*)outputPtr));
+  LOG(Info, "Done Int8Shift::Multiply");
   return 0;
 }
 
@@ -189,9 +205,11 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
   uint8_t* inputMatrixBPreparedPtr = &memBase[inputMatrixBPrepared];
   uint8_t* colIndexListPtr = &memBase[colIndexList];
   uint8_t* outputPtr = &memBase[output];
+  LOG(Info, "Calling Int8::SelectColumnsB");
   ::intgemm::Int8::SelectColumnsB(
       (const int8_t*)inputMatrixBPreparedPtr, (int8_t*)outputPtr, (Index)rowsB,
       (const Index*)colIndexListPtr,
       (const Index*)colIndexListPtr + sizeColIndexList);
+  LOG(Info, "Done Int8::SelectColumnsB");
   return 0;
 }
