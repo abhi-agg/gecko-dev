@@ -19,35 +19,38 @@ namespace mozilla {
   static mozilla::LazyLogModule gIntGemmLog("IntGemmLog");
   #define LOG(level, ...) MOZ_LOG(gIntGemmLog, mozilla::LogLevel::level, (__VA_ARGS__))
 }
+
+namespace js {
+namespace intgemm {
+
 #define INTGEMM_INTR_SHARED 0
 
-const WasmArrayRawBuffer* getWasmArrayRawBuffer(uint8_t* memBase) {
+size_t getWasmRawBufferLength(uint8_t* memBase) {
   #if INTGEMM_INTR_SHARED
-    const SharedArrayRawBuffer* rawBuf =
-        SharedArrayRawBuffer::fromDataPtr(memBase);
-    size_t memLen = rawBuf->volatileByteLength();
+    const js::SharedArrayRawBuffer* rawBuf =
+        js::SharedArrayRawBuffer::fromDataPtr(memBase);
+    return rawBuf->volatileByteLength();
     // TODO shall be more carefull with using shared buffer
   #else
-    return WasmArrayRawBuffer::fromDataPtr(memBase);
+    const js::WasmArrayRawBuffer* rawBuf = js::WasmArrayRawBuffer::fromDataPtr(memBase);
+    return rawBuf->byteLength();
   #endif
+}
+
+bool isMemoryBoundCheckPassed(uint32_t input, uint64_t inputSize, size_t wasmBufferLimit) {
+  //ToDo: Deal with arithmetic overflow
+  uint64_t inputUpperLimit = (uint64_t)input + inputSize;
+  return (inputUpperLimit > wasmBufferLimit) ? false : true;
+}
+}
 }
 
 int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr, uint32_t len,
                                  uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrSample1.failureMode == FailureMode::FailOnNegI32);
 
-#if INTGEMM_INTR_SHARED
-  const SharedArrayRawBuffer* rawBuf =
-      SharedArrayRawBuffer::fromDataPtr(memBase);
-  size_t memLen = rawBuf->volatileByteLength();
-  // TODO shall be more carefull with using shared buffer
-#else
-  const WasmArrayRawBuffer* rawBuf = WasmArrayRawBuffer::fromDataPtr(memBase);
-  size_t memLen = rawBuf->byteLength();
-#endif
-  // Bounds check and deal with arithmetic overflow.
-  uint64_t destLimit = uint64_t(arr) + uint64_t(len);
-  if (destLimit > memLen) {
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
+  if (!isMemoryBoundCheckPassed(arr, len, wasmBufferLen)) {
     JSContext* cx = TlsContext.get();
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_WASM_OUT_OF_BOUNDS);
@@ -71,36 +74,12 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   fprintf(stderr, "intrI8PrepareB called with inputMatrixB:%d outputMatrixB:%d\n", inputMatrixB, outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  const WasmArrayRawBuffer* rawBuf = getWasmArrayRawBuffer(memBase);
-  size_t memLen = rawBuf->byteLength();
-
-  // Size of matrix shouldn't be zero
+  // Bounds check for all matricies and output
+  // ToDo: Check matrix size requirements
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
-  if (matrixSize == 0) {
+  if (!isMemoryBoundCheckPassed(inputMatrixB, matrixSize, wasmBufferLen) || !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLen)) {
     JSContext* cx = TlsContext.get();
-    // ToDo: Some meaningful error message?
-    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                              JSMSG_WASM_OUT_OF_BOUNDS);
-    return -1;
-  }
-
-  // Bounds check and deal with arithmetic overflow for input matrix
-  // ToDo: Should there be a bound check for inputMatrixB?
-  uint64_t inputDestLimit = uint64_t(inputMatrixB) + matrixSize;
-  if (inputDestLimit > memLen) {
-    JSContext* cx = TlsContext.get();
-    // ToDo: Some meaningful error message?
-    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                              JSMSG_WASM_OUT_OF_BOUNDS);
-    return -1;
-  }
-
-  // Bounds check and deal with arithmetic overflow for output matrix
-  // ToDo: Should there be a bound check for outputMatrixB?
-  uint64_t outputDestLimit = uint64_t(outputMatrixB) + matrixSize;
-  if (outputDestLimit > memLen) {
-    JSContext* cx = TlsContext.get();
-    // ToDo: Some meaningful error message?
     JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
                               JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
@@ -130,7 +109,19 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
 int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
     Index rowsB, Index colsB, uint32_t outputMatrixB, uint8_t* memBase) {
-  // ToDo: Write implementation
+  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+
+  // Bounds check for all matricies and output
+  // ToDo: Check matrix size requirements
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
+  uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
+  if (!isMemoryBoundCheckPassed(inputMatrixBQuantizedTransposed, matrixSize, wasmBufferLen) || !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLen)) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
   uint8_t* inputMatrixBQuantizedTransposedPtr =
       &memBase[inputMatrixBQuantizedTransposed];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
@@ -146,7 +137,19 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
                                     uint32_t inputMatrixA, float scale,
                                     float zeroPoint, Index rowsA, Index colsA,
                                     uint32_t outputMatrixA, uint8_t* memBase) {
-  // ToDo: Write implementation
+  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+
+  // Bounds check for all matricies and output
+  // ToDo: Check matrix size requirements
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
+  uint64_t matrixSize = (uint64_t)rowsA * (uint64_t)colsA;
+  if (!isMemoryBoundCheckPassed(inputMatrixA, matrixSize, wasmBufferLen) || !isMemoryBoundCheckPassed(outputMatrixA, matrixSize, wasmBufferLen)) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
   uint8_t* inputMatrixAPtr = &memBase[inputMatrixA];
   uint8_t* outputMatrixAPtr = &memBase[outputMatrixA];
   fprintf(stderr, "Calling Int8Shift::PrepareA\n");
@@ -161,7 +164,19 @@ int32_t js::intgemm::intrI8PrepareBias(
     wasm::Instance* instance, uint32_t inputMatrixBPrepared, float scaleA,
     float zeroPointA, float scaleB, float zeroPointB, Index rowsB, Index colsB,
     uint32_t inputBias, uint32_t output, uint8_t* memBase) {
-  // ToDo: Write implementation
+  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+
+  // Bounds check for all matricies and output
+  // ToDo: Check matrix size requirements
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
+  uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
+  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize, wasmBufferLen) || !isMemoryBoundCheckPassed(inputBias, colsB, wasmBufferLen) || !isMemoryBoundCheckPassed(output, colsB, wasmBufferLen)) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
   uint8_t* inputMatrixBPreparedPtr = &memBase[inputMatrixBPrepared];
   uint8_t* inputBiasPtr = &memBase[inputBias];
   uint8_t* outputPtr = &memBase[output];
@@ -181,6 +196,22 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     float zeroPointA, uint32_t inputMatrixBPrepared, float scaleB,
     float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
     Index rowsA, Index width, Index colsB, uint32_t output, uint8_t* memBase) {
+  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+
+  // Bounds check for all matricies and output
+  // ToDo: Check matrix size requirements
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
+  uint64_t matrixASize = (uint64_t)rowsA * (uint64_t)width;
+  uint64_t matrixBSize = (uint64_t)width * (uint64_t)colsB;
+  uint64_t inputBiasSize = (uint64_t)colsB;
+  uint64_t outputSize = (uint64_t)rowsA * (uint64_t)colsB;
+  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, matrixASize, wasmBufferLen) || !isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixBSize, wasmBufferLen) || !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize, wasmBufferLen) || !isMemoryBoundCheckPassed(output, outputSize, wasmBufferLen)) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
   // ToDo: Write implementation
   uint8_t* inputMatrixAPreparedPtr = &memBase[inputMatrixAPrepared];
   uint8_t* inputMatrixBPreparedPtr = &memBase[inputMatrixBPrepared];
@@ -205,7 +236,20 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             Index colIndexList,
                                             Index sizeColIndexList,
                                             uint32_t output, uint8_t* memBase) {
-  // ToDo: Write implementation
+  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+
+  // Bounds check for all matricies and output
+  // ToDo: Check matrix size requirements
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
+  uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
+  uint64_t outputSize = (uint64_t)rowsB * (uint64_t)sizeColIndexList;
+  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize, wasmBufferLen) || !isMemoryBoundCheckPassed(colIndexList, sizeColIndexList, wasmBufferLen) || !isMemoryBoundCheckPassed(output, outputSize, wasmBufferLen)) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
   uint8_t* inputMatrixBPreparedPtr = &memBase[inputMatrixBPrepared];
   uint8_t* colIndexListPtr = &memBase[colIndexList];
   uint8_t* outputPtr = &memBase[output];
