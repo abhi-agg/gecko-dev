@@ -98,7 +98,7 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   ::intgemm::Int8::PrepareB((const float*)inputMatrixBPtr,
                             (int8_t*)outputMatrixBPtr,
                             (float)scale,  // Quant Mult
-                            (Index)rowsB, (Index)colsB);
+                            rowsB, colsB);
   fprintf(stderr, "Done Int8::PrepareB\n");
   return 0;
 }
@@ -141,7 +141,7 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
           rowsB, colsB);
   ::intgemm::Int8::PrepareBQuantizedTransposed(
       (const int8_t*)inputMatrixBQuantizedTransposedPtr,
-      (int8_t*)outputMatrixBPtr, (Index)rowsB, (Index)colsB);
+      (int8_t*)outputMatrixBPtr, rowsB, colsB);
   fprintf(stderr, "Done Int8::PrepareBQuantizedTransposed\n");
   return 0;
 }
@@ -172,8 +172,8 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
           inputMatrixAPtr, outputMatrixAPtr,
           rowsA, colsA);
   ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixAPtr,
-                                 (int8_t*)outputMatrixAPtr, scale, (Index)rowsA,
-                                 (Index)colsA);
+                                 (int8_t*)outputMatrixAPtr, scale, rowsA,
+                                 colsA);
   fprintf(stderr, "Done Int8Shift::PrepareA\n");
   return 0;
 }
@@ -209,7 +209,7 @@ int32_t js::intgemm::intrI8PrepareBias(
           inputMatrixBPreparedPtr, inputBiasPtr, outputPtr,
           unquantFactor, rowsB, colsB);
   ::intgemm::Int8Shift::PrepareBias(
-      (const int8_t*)inputMatrixBPreparedPtr, (Index)rowsB, (Index)colsB,
+      (const int8_t*)inputMatrixBPreparedPtr, rowsB, colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPtr, (float*)outputPtr));
   fprintf(stderr, "Done Int8Shift::PrepareBias\n");
@@ -256,8 +256,8 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
           inputBiasPreparedPtr, outputPtr, unquantFactor, rowsA, width, colsB);
   ::intgemm::Int8Shift::Multiply(
       (const int8_t*)inputMatrixAPreparedPtr,
-      (const int8_t*)inputMatrixBPreparedPtr, (Index)rowsA, (Index)width,
-      (Index)colsB,
+      (const int8_t*)inputMatrixBPreparedPtr, rowsA, width,
+      colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPreparedPtr,
           (float*)outputPtr));
@@ -294,9 +294,9 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
   uint8_t* outputPtr = &memBase[output];
   fprintf(stderr, "Calling Int8::SelectColumnsB\n");
   ::intgemm::Int8::SelectColumnsB(
-      (const int8_t*)inputMatrixBPreparedPtr, (int8_t*)outputPtr, (Index)rowsB,
-      (const Index*)colIndexListPtr,
-      (const Index*)colIndexListPtr + sizeColIndexList);
+      (const int8_t*)inputMatrixBPreparedPtr, (int8_t*)outputPtr, rowsB,
+      (const Size*)colIndexListPtr,
+      (const Size*)colIndexListPtr + sizeColIndexList);
   fprintf(stderr, "Done Int8::SelectColumnsB\n");
   return 0;
 }
