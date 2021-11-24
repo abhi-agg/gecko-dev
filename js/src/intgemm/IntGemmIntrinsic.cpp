@@ -71,8 +71,8 @@ int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr, uint32_t len,
 
 int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                                     uint32_t inputMatrixB, float scale,
-                                    float zeroPoint, uint32_t rowsB,
-                                    uint32_t colsB, uint32_t outputMatrixB,
+                                    float zeroPoint, Size rowsB,
+                                    Size colsB, uint32_t outputMatrixB,
                                     uint8_t* memBase) {
   fprintf(stderr,
           "intrI8PrepareB called with inputMatrixB:%d outputMatrixB:%d\n",
@@ -105,7 +105,7 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
 
 int32_t js::intgemm::intrI8PrepareBFromTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBTransposed, float scale,
-    float zeroPoint, Index rowsB, Index colsB, uint32_t outputMatrixB,
+    float zeroPoint, Size rowsB, Size colsB, uint32_t outputMatrixB,
     uint8_t* memBase) {
   JSContext* cx = TlsContext.get();
   JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
@@ -115,7 +115,7 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
 
 int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
-    Index rowsB, Index colsB, uint32_t outputMatrixB, uint8_t* memBase) {
+    Size rowsB, Size colsB, uint32_t outputMatrixB, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Bounds check for all matricies and output
@@ -148,7 +148,7 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
 
 int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
                                     uint32_t inputMatrixA, float scale,
-                                    float zeroPoint, Index rowsA, Index colsA,
+                                    float zeroPoint, Size rowsA, Size colsA,
                                     uint32_t outputMatrixA, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
@@ -180,7 +180,7 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
 
 int32_t js::intgemm::intrI8PrepareBias(
     wasm::Instance* instance, uint32_t inputMatrixBPrepared, float scaleA,
-    float zeroPointA, float scaleB, float zeroPointB, Index rowsB, Index colsB,
+    float zeroPointA, float scaleB, float zeroPointB, Size rowsB, Size colsB,
     uint32_t inputBias, uint32_t output, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
@@ -220,7 +220,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     wasm::Instance* instance, uint32_t inputMatrixAPrepared, float scaleA,
     float zeroPointA, uint32_t inputMatrixBPrepared, float scaleB,
     float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
-    Index rowsA, Index width, Index colsB, uint32_t output, uint8_t* memBase) {
+    Size rowsA, Size width, Size colsB, uint32_t output, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Bounds check for all matricies and output
@@ -267,9 +267,9 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
 
 int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             uint32_t inputMatrixBPrepared,
-                                            Index rowsB, Index colsB,
-                                            Index colIndexList,
-                                            Index sizeColIndexList,
+                                            Size rowsB, Size colsB,
+                                            Size colIndexList,
+                                            Size sizeColIndexList,
                                             uint32_t output, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
