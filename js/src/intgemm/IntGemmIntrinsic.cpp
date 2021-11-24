@@ -107,8 +107,9 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBTransposed, float scale,
     float zeroPoint, Index rowsB, Index colsB, uint32_t outputMatrixB,
     uint8_t* memBase) {
-  // JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-  //                             JSMSG_WASM_OUT_OF_BOUNDS);
+  JSContext* cx = TlsContext.get();
+  JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                            JSMSG_WASM_OUT_OF_BOUNDS);
   return -1;
 }
 
@@ -133,7 +134,11 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   uint8_t* inputMatrixBQuantizedTransposedPtr =
       &memBase[inputMatrixBQuantizedTransposed];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
-  fprintf(stderr, "Calling Int8::PrepareBQuantizedTransposed\n");
+  fprintf(stderr,
+          "Calling Int8::PrepareBQuantizedTransposed: Bprepared:%p, output:%p, "
+          "width:%" PRIu32 ", colsB:%" PRIu32 "\n",
+          inputMatrixBQuantizedTransposedPtr, outputMatrixBPtr,
+          rowsB, colsB);
   ::intgemm::Int8::PrepareBQuantizedTransposed(
       (const int8_t*)inputMatrixBQuantizedTransposedPtr,
       (int8_t*)outputMatrixBPtr, (Index)rowsB, (Index)colsB);
@@ -161,7 +166,11 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
 
   uint8_t* inputMatrixAPtr = &memBase[inputMatrixA];
   uint8_t* outputMatrixAPtr = &memBase[outputMatrixA];
-  fprintf(stderr, "Calling Int8Shift::PrepareA\n");
+  fprintf(stderr,
+          "Calling Int8Shift::PrepareA: A:%p, output:%p, "
+          "rowsA:%" PRIu32 ", width:%" PRIu32 "\n",
+          inputMatrixAPtr, outputMatrixAPtr,
+          rowsA, colsA);
   ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixAPtr,
                                  (int8_t*)outputMatrixAPtr, scale, (Index)rowsA,
                                  (Index)colsA);
@@ -194,7 +203,11 @@ int32_t js::intgemm::intrI8PrepareBias(
   uint8_t* outputPtr = &memBase[output];
   float unquantFactor =
       (-1) * ((127.0f / scaleA) * (127.0f / scaleB)) / (127.0f);
-  fprintf(stderr, "Calling Int8Shift::PrepareBias\n");
+  fprintf(stderr,
+          "Calling Int8Shift::PrepareBias: B:%p, inputBias:%p, output:%p, "
+          "unquantFactor:%f, width:%" PRIu32 ", colsB:%" PRIu32 "\n",
+          inputMatrixBPreparedPtr, inputBiasPtr, outputPtr,
+          unquantFactor, rowsB, colsB);
   ::intgemm::Int8Shift::PrepareBias(
       (const int8_t*)inputMatrixBPreparedPtr, (Index)rowsB, (Index)colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
@@ -238,7 +251,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   float unquantFactor = unquantMultiplier / (scaleA * scaleB);
   fprintf(stderr,
           "Calling Int8Shift::Multiply: A:%p, B:%p, Bias:%p, output:%p, "
-          "unquantFactor:%f, rows:%d, width:%d, cols:%d\n",
+          "unquantFactor:%f, rowsA:%" PRIu32 ", width:%" PRIu32 ", colsB:%" PRIu32 "\n",
           inputMatrixAPreparedPtr, inputMatrixBPreparedPtr,
           inputBiasPreparedPtr, outputPtr, unquantFactor, rowsA, width, colsB);
   ::intgemm::Int8Shift::Multiply(
