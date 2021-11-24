@@ -39,7 +39,9 @@ CPU_ATTR static inline void write(vi input, int* output, Index offset) {
 }
 
 CPU_ATTR static inline void write(vf input, float* output, Index offset) {
+  //fprintf(stderr, "kernel::write output:%p  offset:%u final-pointer:%p\n", output, offset, output+offset);
   *reinterpret_cast<vf*>(output + offset) = input;
+  //fprintf(stderr, "kernel::write Done\n");
 }
 
 CPU_ATTR static inline void write(vd input, double* output, Index offset) {

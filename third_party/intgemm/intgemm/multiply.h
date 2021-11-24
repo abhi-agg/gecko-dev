@@ -292,21 +292,28 @@ template <typename Callback> target static void Multiply(const int16_t *A, const
 //An int8 version of the above code, using the add 127 technique
 #define INTGEMM_MULTIPLY8SHIFT(Register, target, cpu_type) \
   template <class Callback> target static void Multiply8Shift(const uint8_t *A, const int8_t *B, Index A_rows, Index width, Index B_cols, Callback callback) { \
+  fprintf(stderr, "INTGEMM: A:%p, B:%p, sizeof(Register):%lu, cpu_type:%d, rowsA:%u, width:%u, colsB:%u\n", A, B, sizeof(Register), cpu_type, A_rows, width, B_cols); \
   assert(width % (sizeof(Register) / sizeof(int8_t)) == 0); \
   assert(B_cols % 8 == 0); \
   assert(reinterpret_cast<uintptr_t>(A) % sizeof(Register) == 0); \
   assert(reinterpret_cast<uintptr_t>(B) % sizeof(Register) == 0); \
   const Index simd_width = width / (sizeof(Register) / sizeof(int8_t)); \
+  /*fprintf(stderr, "INTGEMM 2 simd_width:%d\n", simd_width); */ \
   auto callback_impl = callbacks::CallbackImpl<cpu_type, Callback>(callback); \
+  /*fprintf(stderr, "INTGEMM 3\n"); */ \
   INTGEMM_OMP_FOR \
   for (Index B0_colidx = 0; B0_colidx < B_cols; B0_colidx += 8) { \
+    /*fprintf(stderr, "B_idx:%d\n", B0_colidx); */ \
     const Register *B0_col = reinterpret_cast<const Register *>(B) + simd_width * B0_colidx; \
+    /*fprintf(stderr, "INTGEMM 4\n"); */ \
     /* Process one row of A at a time.  Doesn't seem to be faster to do multiple rows of A at once.*/ \
     for (Index A_rowidx = 0; A_rowidx < A_rows; ++A_rowidx) { \
+      /*fprintf(stderr, "INTGEMM 5\n"); */ \
       const Register *A_row = reinterpret_cast<const Register*>(A + A_rowidx * width); \
       /* These will be packed 16-bit integers containing sums for each row of B multiplied by the row of A. \
          Iterate over shared (inner) dimension.*/ \
       Index k = 0; \
+      /*fprintf(stderr, "INTGEMM 5.1\n"); */ \
       Register a = *(A_row + k); \
       Register sum0 = maddubs_epi16(a, *(B0_col + k * 8)); \
       Register sum1 = maddubs_epi16(a, *(B0_col + k * 8 + 1)); \
@@ -316,6 +323,7 @@ template <typename Callback> target static void Multiply(const int16_t *A, const
       Register sum5 = maddubs_epi16(a, *(B0_col + k * 8 + 5)); \
       Register sum6 = maddubs_epi16(a, *(B0_col + k * 8 + 6)); \
       Register sum7 = maddubs_epi16(a, *(B0_col + k * 8 + 7)); \
+      /*fprintf(stderr, "INTGEMM 5.2\n"); */ \
       /* Upcast to 32-bit and horizontally add. Seems a bit faster if this is declared here.*/ \
       Register ones = set1_epi16<Register>(1); \
       sum0 = madd_epi16(sum0, ones); \
@@ -326,7 +334,9 @@ template <typename Callback> target static void Multiply(const int16_t *A, const
       sum5 = madd_epi16(sum5, ones); \
       sum6 = madd_epi16(sum6, ones); \
       sum7 = madd_epi16(sum7, ones); \
+      /*fprintf(stderr, "INTGEMM 5.3\n"); */ \
       for (k = 1; k < simd_width; ++k) { \
+        /*fprintf(stderr, "INTGEMM 5.4\n"); */ \
         a = *(A_row + k); \
         /* Multiply 8-bit, horizontally add to packed 16-bit integers.*/ \
         Register mult0 = maddubs_epi16(a, *(B0_col + k * 8)); \
@@ -357,12 +367,15 @@ template <typename Callback> target static void Multiply(const int16_t *A, const
         sum7 = add_epi32(sum7, mult7); \
          \
       } \
+      /*fprintf(stderr, "INTGEMM 6\n"); */ \
       /* Reduce sums within 128-bit lanes.*/ \
       Register pack0123 = Pack0123(sum0, sum1, sum2, sum3); \
       Register pack4567 = Pack0123(sum4, sum5, sum6, sum7); \
       /*The specific implementation may need to reduce further.*/ \
       auto total = PermuteSummer(pack0123, pack4567); \
+      /*fprintf(stderr, "INTGEMM 7\n"); */ \
       RunCallback(callback_impl, total, A_rowidx, B0_colidx, A_rows, B_cols); \
+      /*fprintf(stderr, "INTGEMM 8\n"); */ \
     } \
   } \
 } \

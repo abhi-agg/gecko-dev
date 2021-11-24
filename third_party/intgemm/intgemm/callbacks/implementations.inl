@@ -205,16 +205,22 @@ public:
   }
 
   INTGEMM_TARGET void Run(vi input, const OutputBufferInfo& info) {
+    //fprintf(stderr, "CALLBACK 1\n");
     // Workaround gcc 5 internal compiler error that can't read register members in debug.
     vf mult_reg;
+    //fprintf(stderr, "CALLBACK 2\n");
 #if !defined(__OPTIMIZE__) && (__GNUC__ == 5) && !defined(__clang__) && !defined(__INTEL_COMPILER)
     asm ("vmovdqa %1, %0" : "=x" (mult_reg) : "m" (unquant_mult));
 #else
     mult_reg = unquant_mult;
 #endif
+    //fprintf(stderr, "CALLBACK 3\n");
     auto result = kernels::unquantize(input, mult_reg);
+    //fprintf(stderr, "CALLBACK 4: bias_addr:%p col_idx:%d\n", config.bias_addr, info.col_idx);
     result = kernels::add_bias(result, config.bias_addr, info.col_idx);
+    //fprintf(stderr, "CALLBACK 5: output_addr:%p row_idx:%u cols:%u col_idx:%u\n", config.output_addr, info.row_idx, info.cols, info.col_idx);
     kernels::write(result, config.output_addr, info.row_idx * info.cols + info.col_idx);
+    //fprintf(stderr, "CALLBACK 6\n");
   }
 private:
   vf unquant_mult;
