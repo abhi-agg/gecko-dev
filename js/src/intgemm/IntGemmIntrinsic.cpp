@@ -128,7 +128,7 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                             (int8_t*)outputMatrixBPtr,
                             (float)scale,  // Quant Mult
                             rowsB, colsB);
-  fprintf(stderr, "Done Int8::PrepareB\n");
+  //fprintf(stderr, "Done Int8::PrepareB\n");
   return 0;
 }
 
@@ -173,7 +173,7 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   ::intgemm::Int8::PrepareBQuantizedTransposed(
       (const int8_t*)inputMatrixBQuantizedTransposedPtr,
       (int8_t*)outputMatrixBPtr, rowsB, colsB);
-  fprintf(stderr, "Done Int8::PrepareBQuantizedTransposed\n");
+  //fprintf(stderr, "Done Int8::PrepareBQuantizedTransposed\n");
   return 0;
 }
 
@@ -206,7 +206,7 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixAPtr,
                                  (int8_t*)outputMatrixAPtr, scale, rowsA,
                                  colsA);
-  fprintf(stderr, "Done Int8Shift::PrepareA\n");
+  //fprintf(stderr, "Done Int8Shift::PrepareA\n");
   return 0;
 }
 
@@ -248,7 +248,7 @@ int32_t js::intgemm::intrI8PrepareBias(
       (const int8_t*)inputMatrixBPreparedPtr, rowsB, colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPtr, (float*)outputPtr));
-  fprintf(stderr, "Done Int8Shift::PrepareBias\n");
+  //fprintf(stderr, "Done Int8Shift::PrepareBias\n");
   return 0;
 }
 
@@ -296,13 +296,13 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
           computeAlignment((void*)inputMatrixBPreparedPtr),
           computeAlignment((void*)inputBiasPreparedPtr),
           computeAlignment((void*)outputPtr));
-  ::intgemm::Int8Shift::Multiply(
+  /*::intgemm::Int8Shift::Multiply(
       (const int8_t*)inputMatrixAPreparedPtr,
       (const int8_t*)inputMatrixBPreparedPtr, rowsA, width, colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPreparedPtr,
-          (float*)outputPtr));
-  fprintf(stderr, "Done Int8Shift::Multiply\n");
+          (float*)outputPtr));*/
+  //fprintf(stderr, "Done Int8Shift::Multiply\n");
   return 0;
 }
 
