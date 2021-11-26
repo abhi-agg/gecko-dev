@@ -24,6 +24,31 @@ static mozilla::LazyLogModule gIntGemmLog("IntGemmLog");
 namespace js {
 namespace intgemm {
 
+unsigned computeAlignment(void* address) {
+  auto ptr = reinterpret_cast<std::uintptr_t>(address);
+  if ((ptr % 512) == 0) {
+    return 512;
+  } else if ((ptr % 256) == 0) {
+    return 256;
+  } else if ((ptr % 128) == 0) {
+    return 128;
+  } else if ((ptr % 64) == 0) {
+    return 64;
+  } else if ((ptr % 32) == 0) {
+    return 32;
+  } else if ((ptr % 16) == 0) {
+    return 16;
+  } else if ((ptr % 8) == 0) {
+    return 8;
+  } else if ((ptr % 4) == 0) {
+    return 4;
+  } else if ((ptr % 2) == 0) {
+    return 2;
+  } else {
+    return 1;
+  }
+}
+
 #define INTGEMM_INTR_SHARED 0
 
 size_t getWasmRawBufferLength(uint8_t* memBase) {
@@ -71,9 +96,8 @@ int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr, uint32_t len,
 
 int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                                     uint32_t inputMatrixB, float scale,
-                                    float zeroPoint, Size rowsB,
-                                    Size colsB, uint32_t outputMatrixB,
-                                    uint8_t* memBase) {
+                                    float zeroPoint, Size rowsB, Size colsB,
+                                    uint32_t outputMatrixB, uint8_t* memBase) {
   fprintf(stderr,
           "intrI8PrepareB called with inputMatrixB:%d outputMatrixB:%d\n",
           inputMatrixB, outputMatrixB);
@@ -94,7 +118,12 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   uint8_t* inputMatrixBPtr = &memBase[inputMatrixB];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
   // Actual call to the 3rd party library (intgemm) for PrepareB
-  fprintf(stderr, "Calling Int8::PrepareB\n");
+  fprintf(stderr,
+          "%s: B:%p   Bp:%p   width:%" PRIu32 "   colsB:%" PRIu32
+          "   B_align:%u   Bp_align:%u\n",
+          __FUNCTION__, inputMatrixBPtr, outputMatrixBPtr, rowsB, colsB,
+          computeAlignment((void*)inputMatrixBPtr),
+          computeAlignment((void*)outputMatrixBPtr));
   ::intgemm::Int8::PrepareB((const float*)inputMatrixBPtr,
                             (int8_t*)outputMatrixBPtr,
                             (float)scale,  // Quant Mult
@@ -134,11 +163,13 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   uint8_t* inputMatrixBQuantizedTransposedPtr =
       &memBase[inputMatrixBQuantizedTransposed];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
-  fprintf(stderr,
-          "Calling Int8::PrepareBQuantizedTransposed: Bprepared:%p, output:%p, "
-          "width:%" PRIu32 ", colsB:%" PRIu32 "\n",
-          inputMatrixBQuantizedTransposedPtr, outputMatrixBPtr,
-          rowsB, colsB);
+  fprintf(
+      stderr,
+      "%s: Bqt:%p   Bp:%p   "
+      "width:%" PRIu32 "   colsB:%" PRIu32 "   Bqt_align:%u   Bp_align:%u\n",
+      __FUNCTION__, inputMatrixBQuantizedTransposedPtr, outputMatrixBPtr, rowsB,
+      colsB, computeAlignment((void*)inputMatrixBQuantizedTransposedPtr),
+      computeAlignment((void*)outputMatrixBPtr));
   ::intgemm::Int8::PrepareBQuantizedTransposed(
       (const int8_t*)inputMatrixBQuantizedTransposedPtr,
       (int8_t*)outputMatrixBPtr, rowsB, colsB);
@@ -167,10 +198,11 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   uint8_t* inputMatrixAPtr = &memBase[inputMatrixA];
   uint8_t* outputMatrixAPtr = &memBase[outputMatrixA];
   fprintf(stderr,
-          "Calling Int8Shift::PrepareA: A:%p, output:%p, "
-          "rowsA:%" PRIu32 ", width:%" PRIu32 "\n",
-          inputMatrixAPtr, outputMatrixAPtr,
-          rowsA, colsA);
+          "%s: A:%p   Ap:%p   "
+          "rowsA:%" PRIu32 "   width:%" PRIu32 "   A_align:%u   Ap_align:%u\n",
+          __FUNCTION__, inputMatrixAPtr, outputMatrixAPtr, rowsA, colsA,
+          computeAlignment((void*)inputMatrixAPtr),
+          computeAlignment((void*)outputMatrixAPtr));
   ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixAPtr,
                                  (int8_t*)outputMatrixAPtr, scale, rowsA,
                                  colsA);
@@ -204,10 +236,14 @@ int32_t js::intgemm::intrI8PrepareBias(
   float unquantFactor =
       (-1) * ((127.0f / scaleA) * (127.0f / scaleB)) / (127.0f);
   fprintf(stderr,
-          "Calling Int8Shift::PrepareBias: B:%p, inputBias:%p, output:%p, "
-          "unquantFactor:%f, width:%" PRIu32 ", colsB:%" PRIu32 "\n",
-          inputMatrixBPreparedPtr, inputBiasPtr, outputPtr,
-          unquantFactor, rowsB, colsB);
+          "%s: Bp:%p   bias:%p   bias_p:%p   "
+          "unquantFactor:%f   width:%" PRIu32 "   colsB:%" PRIu32
+          "   Bp_align:%u   bias_align:%u   bias_p_align:%u\n",
+          __FUNCTION__, inputMatrixBPreparedPtr, inputBiasPtr, outputPtr,
+          unquantFactor, rowsB, colsB,
+          computeAlignment((void*)inputMatrixBPreparedPtr),
+          computeAlignment((void*)inputBiasPtr),
+          computeAlignment((void*)outputPtr));
   ::intgemm::Int8Shift::PrepareBias(
       (const int8_t*)inputMatrixBPreparedPtr, rowsB, colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
@@ -250,14 +286,19 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   uint8_t* outputPtr = &memBase[output];
   float unquantFactor = unquantMultiplier / (scaleA * scaleB);
   fprintf(stderr,
-          "Calling Int8Shift::Multiply: A:%p, B:%p, Bias:%p, output:%p, "
-          "unquantFactor:%f, rowsA:%" PRIu32 ", width:%" PRIu32 ", colsB:%" PRIu32 "\n",
-          inputMatrixAPreparedPtr, inputMatrixBPreparedPtr,
-          inputBiasPreparedPtr, outputPtr, unquantFactor, rowsA, width, colsB);
+          "%s: Ap:%p   Bp:%p   bias_p:%p   output:%p   "
+          "unquantFactor:%f   rowsA:%" PRIu32 "   width:%" PRIu32
+          "   colsB:%" PRIu32
+          "   Ap_align:%u   Bp_align:%u   bias_p_align:%u   output_align:%u\n",
+          __FUNCTION__, inputMatrixAPreparedPtr, inputMatrixBPreparedPtr,
+          inputBiasPreparedPtr, outputPtr, unquantFactor, rowsA, width, colsB,
+          computeAlignment((void*)inputMatrixAPreparedPtr),
+          computeAlignment((void*)inputMatrixBPreparedPtr),
+          computeAlignment((void*)inputBiasPreparedPtr),
+          computeAlignment((void*)outputPtr));
   ::intgemm::Int8Shift::Multiply(
       (const int8_t*)inputMatrixAPreparedPtr,
-      (const int8_t*)inputMatrixBPreparedPtr, rowsA, width,
-      colsB,
+      (const int8_t*)inputMatrixBPreparedPtr, rowsA, width, colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPreparedPtr,
           (float*)outputPtr));
