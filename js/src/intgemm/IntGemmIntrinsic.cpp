@@ -198,7 +198,7 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   uint8_t* inputMatrixAPtr = &memBase[inputMatrixA];
   uint8_t* outputMatrixAPtr = &memBase[outputMatrixA];
   fprintf(stderr,
-          "%s: A:%p   Ap:%p   "
+          "\n%s: A:%p   Ap:%p   "
           "rowsA:%" PRIu32 "   width:%" PRIu32 "   A_align:%u   Ap_align:%u\n",
           __FUNCTION__, inputMatrixAPtr, outputMatrixAPtr, rowsA, colsA,
           computeAlignment((void*)inputMatrixAPtr),
@@ -236,7 +236,7 @@ int32_t js::intgemm::intrI8PrepareBias(
   float unquantFactor =
       (-1) * ((127.0f / scaleA) * (127.0f / scaleB)) / (127.0f);
   fprintf(stderr,
-          "%s: Bp:%p   bias:%p   bias_p:%p   "
+          "\n%s: Bp:%p   bias:%p   bias_p:%p   "
           "unquantFactor:%f   width:%" PRIu32 "   colsB:%" PRIu32
           "   Bp_align:%u   bias_align:%u   bias_p_align:%u\n",
           __FUNCTION__, inputMatrixBPreparedPtr, inputBiasPtr, outputPtr,
@@ -252,11 +252,20 @@ int32_t js::intgemm::intrI8PrepareBias(
   return 0;
 }
 
+#if 1
 int32_t js::intgemm::intrI8MultiplyAndAddBias(
     wasm::Instance* instance, uint32_t inputMatrixAPrepared, float scaleA,
     float zeroPointA, uint32_t inputMatrixBPrepared, float scaleB,
     float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
     Size rowsA, Size width, Size colsB, uint32_t output, uint8_t* memBase) {
+  fprintf(stderr,
+        "\n%s:\ninputMatrixAPrepared:%x" PRIu32 "  scaleA:%f  zeroPointA:%f  "
+        "inputMatrixBPrepared:%x" PRIu32 "  scaleB:%f  zeroPointB:%f  "
+        "inputBiasPrepared:%x" PRIu32 "  unquantMultiplier:%f  "
+        "rowsA:%" PRIu32 "  width:%" PRIu32 "  colsB:%" PRIu32 "  output:%x" PRIu32 "\n",
+        __FUNCTION__, inputMatrixAPrepared, scaleA, zeroPointA, inputMatrixBPrepared,
+        scaleB, zeroPointB, inputBiasPrepared, unquantMultiplier, rowsA, width, colsB, output);
+
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Bounds check for all matricies and output
@@ -296,15 +305,83 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
           computeAlignment((void*)inputMatrixBPreparedPtr),
           computeAlignment((void*)inputBiasPreparedPtr),
           computeAlignment((void*)outputPtr));
-  /*::intgemm::Int8Shift::Multiply(
+  ::intgemm::Int8Shift::Multiply(
       (const int8_t*)inputMatrixAPreparedPtr,
       (const int8_t*)inputMatrixBPreparedPtr, rowsA, width, colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPreparedPtr,
-          (float*)outputPtr));*/
+          (float*)outputPtr));
   //fprintf(stderr, "Done Int8Shift::Multiply\n");
   return 0;
 }
+#else
+int32_t js::intgemm::intrI8MultiplyAndAddBias(
+    wasm::Instance* instance, uint32_t inputMatrixAPrepared, uint32_t inputMatrixBPrepared,
+    uint32_t inputBiasPrepared, float unquantMultiplier,
+    Size rowsA, Size width, Size colsB, uint32_t output, uint8_t* memBase) {
+  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+
+  // Bounds check for all matricies and output
+  // ToDo: Check matrix size requirements
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
+  uint64_t structSize = 12;
+  uint64_t matrixASize = (uint64_t)rowsA * (uint64_t)width;
+  uint64_t matrixBSize = (uint64_t)width * (uint64_t)colsB;
+  uint64_t inputBiasSize = (uint64_t)colsB;
+  uint64_t outputSize = (uint64_t)rowsA * (uint64_t)colsB;
+  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, structSize,
+                                wasmBufferLen) ||
+      !isMemoryBoundCheckPassed(inputMatrixBPrepared, structSize,
+                                wasmBufferLen) ||
+      !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize,
+                                wasmBufferLen) ||
+      !isMemoryBoundCheckPassed(output, outputSize, wasmBufferLen)) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
+  uint32_t* structA = (uint32_t*)(&memBase[inputMatrixAPrepared]);
+  uint32_t* structB = (uint32_t*)(&memBase[inputMatrixBPrepared]);
+  if (!isMemoryBoundCheckPassed(*structA, matrixASize,
+                                wasmBufferLen) ||
+      !isMemoryBoundCheckPassed(*structB, matrixBSize,
+                                wasmBufferLen)) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
+  uint8_t* inputMatrixAPreparedPtr = &memBase[*structA];
+  uint8_t* inputMatrixBPreparedPtr = &memBase[*structB];
+  uint8_t* inputBiasPreparedPtr = &memBase[inputBiasPrepared];
+  uint8_t* outputPtr = &memBase[output];
+  float scaleA = *((float*)structA + 1);
+  float scaleB = *((float*)structB + 1);
+  float unquantFactor = unquantMultiplier / (scaleA * scaleB);
+  fprintf(stderr,
+          "\n%s:\n Ap:%p   Bp:%p   bias_p:%p   output:%p   "
+          "unquantFactor:%f   rowsA:%" PRIu32 "   width:%" PRIu32
+          "   colsB:%" PRIu32
+          "   Ap_align:%u   Bp_align:%u   bias_p_align:%u   output_align:%u\n",
+          __FUNCTION__, inputMatrixAPreparedPtr, inputMatrixBPreparedPtr,
+          inputBiasPreparedPtr, outputPtr, unquantFactor, rowsA, width, colsB,
+          computeAlignment((void*)inputMatrixAPreparedPtr),
+          computeAlignment((void*)inputMatrixBPreparedPtr),
+          computeAlignment((void*)inputBiasPreparedPtr),
+          computeAlignment((void*)outputPtr));
+  ::intgemm::Int8Shift::Multiply(
+      (const int8_t*)inputMatrixAPreparedPtr,
+      (const int8_t*)inputMatrixBPreparedPtr, rowsA, width, colsB,
+      ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
+          unquantFactor, (const float*)inputBiasPreparedPtr,
+          (float*)outputPtr));
+  //fprintf(stderr, "Done Int8Shift::Multiply\n");
+  return 0;
+}
+#endif
 
 int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             uint32_t inputMatrixBPrepared,

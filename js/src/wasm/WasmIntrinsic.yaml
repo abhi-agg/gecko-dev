@@ -136,6 +136,23 @@
     - I32
     - I32
 
+# The I8MultiplyAndAddBias intrinsic but with reduced no. of arguments (using structure approach)
+# - op: I8MultiplyAndAddBias
+#   symbolic_address:
+#     name: IntrI8MultiplyAndAddBias
+#     type: Args_Int32_GeneralInt32Int32Int32Float32Int32Int32Int32Int32General
+#   entry: intgemm::intrI8MultiplyAndAddBias
+#   export: int8_multiply_and_add_bias
+#   params:
+#     - I32
+#     - I32
+#     - I32
+#     - F32
+#     - I32
+#     - I32
+#     - I32
+#     - I32
+
 # i8SelectColumnsOfB(const int8_t* inputMatrixBPrepared, uint32_t rowsB, uint32_t colsB, const uint32_t* colIndexList, const uint32_t sizeColIndexList, int8_t* output)
 # i8SelectColumnsOfB(inputMatrixBPrepared: i32, rowsB: i32, colsB: i32, colIndexList: i32, sizeColIndexList: i32, output: i32)
 - op: I8SelectColumnsOfB
