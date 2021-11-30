@@ -19,7 +19,7 @@
 #include "wasm/WasmBuiltins.h"
 
 #include "mozilla/Atomics.h"
-
+#include <vector>
 #include "fdlibm.h"
 #include "jslibmath.h"
 #include "jsmath.h"
@@ -1634,11 +1634,138 @@ struct BuiltinThunks {
     }
   }
 };
+void printAllABIFunctionType() {
+  std::vector<ABIFunctionType> allABIFunctionTypes = {
+    ABIFunctionType::Args_General0,
+    ABIFunctionType::Args_General1,
+    ABIFunctionType::Args_General2,
+    ABIFunctionType::Args_General3,
+    ABIFunctionType::Args_General4,
+    ABIFunctionType::Args_General5,
+    ABIFunctionType::Args_General6,
+    ABIFunctionType::Args_General7,
+    ABIFunctionType::Args_General8,
 
+    // int64 f(double)
+    ABIFunctionType::Args_Int64_Double,
+
+    // double f()
+    ABIFunctionType::Args_Double_None,
+
+    // int f(double)
+    ABIFunctionType::Args_Int_Double,
+
+    // int f(float32)
+    ABIFunctionType::Args_Int_Float32,
+
+    // float f(float)
+    ABIFunctionType::Args_Float32_Float32,
+
+    // float f(int, int)
+    ABIFunctionType::Args_Float32_IntInt,
+
+    // double f(double)
+    ABIFunctionType::Args_Double_Double,
+
+    // double f(int)
+    ABIFunctionType::Args_Double_Int,
+
+    // double f(int, int)
+    ABIFunctionType::Args_Double_IntInt,
+
+    // double f(double, int)
+    ABIFunctionType::Args_Double_DoubleInt,
+
+    // double f(double, double)
+    ABIFunctionType::Args_Double_DoubleDouble,
+
+    // float f(float, float)
+    ABIFunctionType::Args_Float32_Float32Float32,
+
+    // double f(int, double)
+    ABIFunctionType::Args_Double_IntDouble,
+
+    // int f(int, double)
+    ABIFunctionType::Args_Int_IntDouble,
+
+    // int f(double, int)
+    ABIFunctionType::Args_Int_DoubleInt,
+
+    // double f(double, double, double)
+    ABIFunctionType::Args_Double_DoubleDoubleDouble,
+
+    // double f(double, double, double, double)
+    ABIFunctionType::Args_Double_DoubleDoubleDoubleDouble,
+
+    // int f(double, int, int)
+    ABIFunctionType::Args_Int_DoubleIntInt,
+
+    // int f(int, double, int, int)
+    ABIFunctionType::Args_Int_IntDoubleIntInt,
+
+    ABIFunctionType::Args_Int_GeneralGeneralGeneralInt64,
+
+    ABIFunctionType::Args_Int_GeneralGeneralInt64Int64,
+
+    // int32_t f(...) variants
+    ABIFunctionType::Args_Int32_General,
+    ABIFunctionType::Args_Int32_GeneralInt32,
+    ABIFunctionType::Args_Int32_GeneralInt32Int32,
+    ABIFunctionType::Args_Int32_GeneralInt32Int32Int32Int32,
+    ABIFunctionType::Args_Int32_GeneralInt32Int32Int32Int32Int32,
+    ABIFunctionType::Args_Int32_GeneralInt32Int32Int32Int32General,
+    ABIFunctionType::Args_Int32_GeneralInt32Int32Int32Int32Int32Int32General,
+    ABIFunctionType::Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General,
+    ABIFunctionType::Args_Int32_GeneralInt32Float32Float32Float32Float32Int32Int32Int32Int32General,
+    ABIFunctionType::Args_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General,
+    ABIFunctionType::Args_Int32_GeneralInt32Int32Int32General,
+    ABIFunctionType::Args_Int32_GeneralInt32Int32Int64,
+    ABIFunctionType::Args_Int32_GeneralInt32Int32General,
+    ABIFunctionType::Args_Int32_GeneralInt32Int64Int64,
+    ABIFunctionType::Args_Int32_GeneralInt32GeneralInt32,
+    ABIFunctionType::Args_Int32_GeneralInt32GeneralInt32Int32,
+    ABIFunctionType::Args_Int32_GeneralGeneral,
+    ABIFunctionType::Args_Int32_GeneralGeneralGeneral,
+    ABIFunctionType::Args_Int32_GeneralGeneralInt32Int32,
+
+    // general f(...) variants
+    ABIFunctionType::Args_General_GeneralInt32,
+    ABIFunctionType::Args_General_GeneralInt32Int32,
+    ABIFunctionType::Args_General_GeneralInt32General,
+    ABIFunctionType::Args_Int32_GeneralInt64Int32Int32Int32,
+    ABIFunctionType::Args_Int32_GeneralInt64Int32,
+    ABIFunctionType::Args_Int32_GeneralInt64Int32Int64,
+    ABIFunctionType::Args_Int32_GeneralInt64Int32Int64General,
+    ABIFunctionType::Args_Int32_GeneralInt64Int64Int64,
+    ABIFunctionType::Args_Int32_GeneralInt64Int64Int64General,
+
+    // Functions that return Int64 are tricky because SpiderMonkey's ReturnRegI64
+    // does not match the ABI int64 return register on x86.  Wasm only!
+    ABIFunctionType::Args_Int64_General,
+    ABIFunctionType::Args_Int64_GeneralInt64
+  };
+
+  //fprintf(stderr,"Printing ABIFunctionType\n");
+  for (size_t index=0; index < allABIFunctionTypes.size(); index++) {
+    uint64_t abi64 = allABIFunctionTypes[index];
+    uint32_t abi32 = (uint32_t)abi64;
+    //fprintf(stderr,"%#16llx\n", abi64);
+    for (size_t j=index+1; j < allABIFunctionTypes.size(); j++) {
+      uint64_t compared64 = allABIFunctionTypes[j];
+      uint32_t compared32 = (uint32_t)compared64;
+      if (abi64 == compared64) {
+        fprintf(stderr," 64-Match found: %lu - %lu\n", index, j);
+      } else if (abi32 == compared32) {
+        fprintf(stderr," 32-Match found: %lu - %lu  %#16llx\n", index, j, compared64);
+      }
+    }
+  }
+}
 Mutex initBuiltinThunks(mutexid::WasmInitBuiltinThunks);
 Atomic<const BuiltinThunks*> builtinThunks;
 
 bool wasm::EnsureBuiltinThunksInitialized() {
+  printAllABIFunctionType();
   LockGuard<Mutex> guard(initBuiltinThunks);
   if (builtinThunks) {
     return true;
