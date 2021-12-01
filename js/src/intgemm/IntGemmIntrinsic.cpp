@@ -136,10 +136,34 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBTransposed, float scale,
     float zeroPoint, Size rowsB, Size colsB, uint32_t outputMatrixB,
     uint8_t* memBase) {
-  JSContext* cx = TlsContext.get();
-  JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                            JSMSG_WASM_OUT_OF_BOUNDS);
-  return -1;
+  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+
+  // Bounds check for all matricies and output
+  // ToDo: Check matrix size requirements
+  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
+  uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
+  if (!isMemoryBoundCheckPassed(inputMatrixBTransposed, matrixSize, wasmBufferLen) ||
+      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLen)) {
+    JSContext* cx = TlsContext.get();
+    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
+                              JSMSG_WASM_OUT_OF_BOUNDS);
+    return -1;
+  }
+
+  uint8_t* inputMatrixBTransposedPtr = &memBase[inputMatrixBTransposed];
+  uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
+  // Actual call to the 3rd party library (intgemm) for PrepareBTransposed
+  fprintf(stderr,
+          "%s: Bt:%p   Bp:%p   width:%" PRIu32 "   colsB:%" PRIu32
+          "   Bt_align:%u   Bp_align:%u\n",
+          __FUNCTION__, inputMatrixBTransposedPtr, outputMatrixBPtr, rowsB, colsB,
+          computeAlignment((void*)inputMatrixBTransposedPtr),
+          computeAlignment((void*)outputMatrixBPtr));
+  ::intgemm::Int8::PrepareBTransposed((const float*)inputMatrixBTransposedPtr,
+                            (int8_t*)outputMatrixBPtr,
+                            (float)scale,  // Quant Mult
+                            rowsB, colsB);
+  return 0;
 }
 
 int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
