@@ -31,9 +31,6 @@ namespace intgemm {
 // Please check $TOPSRCDIR/third_party/intgemm/intgemm/intgemm.h
 using Size = uint32_t;
 
-int32_t intrSample1(wasm::Instance* instance, uint32_t arr, uint32_t len,
-                    uint8_t* memBase);
-
 // i8PrepareB(inputMatrixB: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB:
 // i32, outputMatrixB: i32)
 int32_t intrI8PrepareB(wasm::Instance* instance, uint32_t inputMatrixB,

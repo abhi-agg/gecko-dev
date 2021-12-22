@@ -16,17 +16,6 @@
     - I32
     - I32
 
-# sample1(arr: i32, len: i32)
-- op: Sample1
-  symbolic_address:
-    name: IntrSample1
-    type: Args_Int32_GeneralInt32Int32General
-  entry: intgemm::intrSample1
-  export: sample1
-  params:
-    - I32
-    - I32
-
 # i8PrepareB(const float* inputMatrixB, float scale, float zeroPoint, uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
 # i8PrepareB(inputMatrixB: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
 - op: I8PrepareB

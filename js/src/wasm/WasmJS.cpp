@@ -5322,7 +5322,6 @@ static bool WebAssembly_mozIntGemm(JSContext* cx, unsigned argc, Value* vp) {
 
   RootedWasmModuleObject module(cx);
   wasm::IntrinsicOp ops[] = {
-      wasm::IntrinsicOp::Sample1,
       wasm::IntrinsicOp::I8PrepareB,
       wasm::IntrinsicOp::I8PrepareBFromTransposed,
       wasm::IntrinsicOp::I8PrepareBFromQuantizedTransposed,

@@ -73,26 +73,6 @@ bool isMemoryBoundCheckPassed(uint32_t input, uint64_t inputSize,
 }  // namespace intgemm
 }  // namespace js
 
-int32_t js::intgemm::intrSample1(Instance* instance, uint32_t arr, uint32_t len,
-                                 uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrSample1.failureMode == FailureMode::FailOnNegI32);
-
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
-  if (!isMemoryBoundCheckPassed(arr, len, wasmBufferLen)) {
-    JSContext* cx = TlsContext.get();
-    JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr,
-                              JSMSG_WASM_OUT_OF_BOUNDS);
-    return -1;
-  }
-
-  if (len == 0) return 0;
-  uint8_t* destPtr = &memBase[arr];
-  for (uint32_t i = 0, j = len - 1; i < j; i++, j--) {
-    std::swap(destPtr[i], destPtr[j]);
-  }
-
-  return 0;
-}
 
 int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                                     uint32_t inputMatrixB, float scale,
