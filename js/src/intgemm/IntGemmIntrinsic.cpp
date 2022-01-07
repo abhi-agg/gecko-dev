@@ -61,14 +61,12 @@ void ReportError(const unsigned errorNumber) {
   JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, errorNumber);
 }
 
-#define INTGEMM_INTR_SHARED 0
-
-size_t getWasmRawBufferLength(uint8_t* memBase) {
-#if INTGEMM_INTR_SHARED
+size_t getWasmRawBufferLength(const uint8_t* memBase) {
+#if INTGEMM_SHARED_MEMORY
+  // TODO: Be more careful with using shared buffer
   const js::SharedArrayRawBuffer* rawBuf =
       js::SharedArrayRawBuffer::fromDataPtr(memBase);
   return rawBuf->volatileByteLength();
-  // TODO shall be more carefull with using shared buffer
 #else
   const js::WasmArrayRawBuffer* rawBuf =
       js::WasmArrayRawBuffer::fromDataPtr(memBase);
@@ -77,10 +75,11 @@ size_t getWasmRawBufferLength(uint8_t* memBase) {
 }
 
 bool isMemoryBoundCheckPassed(uint32_t input, uint64_t inputSize,
-                              size_t wasmBufferLimit) {
+                              const uint8_t* memBase) {
+  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
   // ToDo: Deal with arithmetic overflow
   uint64_t inputUpperLimit = (uint64_t)input + inputSize;
-  return (inputUpperLimit > wasmBufferLimit) ? false : true;
+  return (inputUpperLimit < wasmBufferLimit);
 }
 
 bool isAlignmentCheckPassed(const uint8_t* ptr) {
@@ -99,7 +98,7 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
           inputMatrixB, outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  // Size checks for all matricies
+  // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   if ((matrixSize == 0) || (rowsB % ROWS_B_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
@@ -108,9 +107,8 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   }
 
   // Memory Bound checks for all matricies
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
-  if (!isMemoryBoundCheckPassed(inputMatrixB, matrixSize, wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLen)) {
+  if (!isMemoryBoundCheckPassed(inputMatrixB, matrixSize, memBase) ||
+      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -118,7 +116,7 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   uint8_t* inputMatrixBPtr = &memBase[inputMatrixB];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
 
-  // Alignment checks for all matricies
+  // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBPtr) ||
       !isAlignmentCheckPassed(outputMatrixBPtr)) {
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
@@ -146,7 +144,7 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
     uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  // Size checks for all matricies
+  // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   if ((matrixSize == 0) || (rowsB % ROWS_B_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
@@ -155,10 +153,8 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
   }
 
   // Memory Bound checks for all matricies
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
-  if (!isMemoryBoundCheckPassed(inputMatrixBTransposed, matrixSize,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLen)) {
+  if (!isMemoryBoundCheckPassed(inputMatrixBTransposed, matrixSize, memBase) ||
+      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -166,7 +162,7 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
   uint8_t* inputMatrixBTransposedPtr = &memBase[inputMatrixBTransposed];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
 
-  // Alignment checks for all matricies
+  // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBTransposedPtr) ||
       !isAlignmentCheckPassed(outputMatrixBPtr)) {
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
@@ -192,7 +188,7 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     Size rowsB, Size colsB, uint32_t outputMatrixB, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  // Size checks for all matricies
+  // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   if ((matrixSize == 0) || (rowsB % ROWS_B_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
@@ -201,10 +197,9 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   }
 
   // Memory Bound checks for all matricies
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
   if (!isMemoryBoundCheckPassed(inputMatrixBQuantizedTransposed, matrixSize,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLen)) {
+                                memBase) ||
+      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -213,7 +208,7 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
       &memBase[inputMatrixBQuantizedTransposed];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
 
-  // Alignment checks for all matricies
+  // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBQuantizedTransposedPtr) ||
       !isAlignmentCheckPassed(outputMatrixBPtr)) {
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
@@ -240,7 +235,7 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
                                     uint32_t outputMatrixA, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  // Size checks for all matricies
+  // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsA * (uint64_t)colsA;
   if ((matrixSize == 0) || (rowsA % ROWS_A_MULTIPLIER != 0) ||
       (colsA % COLUMNS_A_MULTIPLIER != 0)) {
@@ -249,9 +244,8 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   }
 
   // Memory Bound checks for all matricies
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
-  if (!isMemoryBoundCheckPassed(inputMatrixA, matrixSize, wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(outputMatrixA, matrixSize, wasmBufferLen)) {
+  if (!isMemoryBoundCheckPassed(inputMatrixA, matrixSize, memBase) ||
+      !isMemoryBoundCheckPassed(outputMatrixA, matrixSize, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -259,7 +253,7 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   uint8_t* inputMatrixAPtr = &memBase[inputMatrixA];
   uint8_t* outputMatrixAPtr = &memBase[outputMatrixA];
 
-  // Alignment checks for all matricies
+  // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixAPtr) ||
       !isAlignmentCheckPassed(outputMatrixAPtr)) {
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
@@ -285,7 +279,7 @@ int32_t js::intgemm::intrI8PrepareBias(
     uint32_t inputBias, uint32_t output, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  // Size checks for all matricies
+  // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   if ((matrixSize == 0) || (rowsB % ROWS_B_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
@@ -294,11 +288,9 @@ int32_t js::intgemm::intrI8PrepareBias(
   }
 
   // Memory Bound checks for all matricies
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
-  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(inputBias, colsB, wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(output, colsB, wasmBufferLen)) {
+  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize, memBase) ||
+      !isMemoryBoundCheckPassed(inputBias, colsB, memBase) ||
+      !isMemoryBoundCheckPassed(output, colsB, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -309,7 +301,7 @@ int32_t js::intgemm::intrI8PrepareBias(
   float unquantFactor =
       (-1) * ((127.0f / scaleA) * (127.0f / scaleB)) / (127.0f);
 
-  // Alignment checks for all matricies
+  // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBPreparedPtr)) {
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
@@ -353,7 +345,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
 
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  // Size checks for all matricies
+  // Size checks for matricies
   uint64_t matrixASize = (uint64_t)rowsA * (uint64_t)width;
   uint64_t matrixBSize = (uint64_t)width * (uint64_t)colsB;
   uint64_t inputBiasSize = (uint64_t)colsB;
@@ -366,14 +358,10 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   }
 
   // Memory Bound checks for all matricies
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
-  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, matrixASize,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixBSize,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(output, outputSize, wasmBufferLen)) {
+  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, matrixASize, memBase) ||
+      !isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixBSize, memBase) ||
+      !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize, memBase) ||
+      !isMemoryBoundCheckPassed(output, outputSize, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -384,7 +372,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   uint8_t* outputPtr = &memBase[output];
   float unquantFactor = unquantMultiplier / (scaleA * scaleB);
 
-  // Alignment checks for all matricies
+  // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixAPreparedPtr) ||
       !isAlignmentCheckPassed(inputMatrixBPreparedPtr)) {
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
@@ -419,7 +407,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     uint32_t output, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  // Size checks for all matricies
+  // Size checks for matricies
   uint64_t matrixASize = (uint64_t)rowsA * (uint64_t)width;
   uint64_t matrixBSize = (uint64_t)width * (uint64_t)colsB;
   uint64_t inputBiasSize = (uint64_t)colsB;
@@ -432,23 +420,19 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   }
 
   // Memory Bound checks for all matricies
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
   constexpr uint64_t STRUCT_SIZE = 12;
-  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, STRUCT_SIZE,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(inputMatrixBPrepared, STRUCT_SIZE,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(output, outputSize, wasmBufferLen)) {
+  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, STRUCT_SIZE, memBase) ||
+      !isMemoryBoundCheckPassed(inputMatrixBPrepared, STRUCT_SIZE, memBase) ||
+      !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize, memBase) ||
+      !isMemoryBoundCheckPassed(output, outputSize, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
 
   uint32_t* structA = (uint32_t*)(&memBase[inputMatrixAPrepared]);
   uint32_t* structB = (uint32_t*)(&memBase[inputMatrixBPrepared]);
-  if (!isMemoryBoundCheckPassed(*structA, matrixASize, wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(*structB, matrixBSize, wasmBufferLen)) {
+  if (!isMemoryBoundCheckPassed(*structA, matrixASize, memBase) ||
+      !isMemoryBoundCheckPassed(*structB, matrixBSize, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -461,7 +445,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   float scaleB = *((float*)structB + 1);
   float unquantFactor = unquantMultiplier / (scaleA * scaleB);
 
-  // Alignment checks for all matricies
+  // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixAPreparedPtr) ||
       !isAlignmentCheckPassed(inputMatrixBPreparedPtr)) {
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
@@ -498,7 +482,7 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             uint32_t output, uint8_t* memBase) {
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
-  // Size checks for all matricies
+  // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   uint64_t outputSize = (uint64_t)rowsB * (uint64_t)sizeColIndexList;
   if ((matrixSize == 0) || (outputSize == 0) ||
@@ -509,12 +493,9 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
   }
 
   // Memory Bound checks for all matricies
-  size_t wasmBufferLen = getWasmRawBufferLength(memBase);
-  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(colIndexList, sizeColIndexList,
-                                wasmBufferLen) ||
-      !isMemoryBoundCheckPassed(output, outputSize, wasmBufferLen)) {
+  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize, memBase) ||
+      !isMemoryBoundCheckPassed(colIndexList, sizeColIndexList, memBase) ||
+      !isMemoryBoundCheckPassed(output, outputSize, memBase)) {
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -523,7 +504,7 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
   uint8_t* colIndexListPtr = &memBase[colIndexList];
   uint8_t* outputPtr = &memBase[output];
 
-  // Alignment checks for all matricies
+  // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBPreparedPtr)) {
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
