@@ -16,6 +16,8 @@
     - I32
     - I32
 
+#if defined(ENABLE_WASM_MOZ_INTGEMM)
+
 # i8PrepareB(const float* inputMatrixB, float scale, float zeroPoint, uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
 # i8PrepareB(inputMatrixB: i32, scale: f32, zeroPoint: f32, rowsB: i32, colsB: i32, outputMatrixB: i32)
 - op: I8PrepareB
@@ -157,3 +159,5 @@
     - I32
     - I32
     - I32
+
+#endif // ENABLE_WASM_MOZ_INTGEMM
