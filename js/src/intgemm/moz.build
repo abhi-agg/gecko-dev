@@ -13,6 +13,8 @@ with Files("*"):
     BUG_COMPONENT = ("Core", "JavaScript: WebAssembly")
 
 LOCAL_INCLUDES += [
+    "!..",
+    "..",
     "/third_party/intgemm/intgemm",
 ]
 
