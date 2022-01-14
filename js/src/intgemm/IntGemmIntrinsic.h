@@ -64,7 +64,6 @@ int32_t intrI8PrepareBias(wasm::Instance* instance,
 // zeroPointA: f32, inputMatrixBPrepared: i32, scaleB: f32, zeroPointB: f32,
 // inputBiasPrepared: i32, unquantMultiplier: f32, rowsA: i32, width: i32,
 // colsB: i32, output: i32)
-#if 1
 int32_t intrI8MultiplyAndAddBias(wasm::Instance* instance,
                                  uint32_t inputMatrixAPrepared, float scaleA,
                                  float zeroPointA,
@@ -73,17 +72,6 @@ int32_t intrI8MultiplyAndAddBias(wasm::Instance* instance,
                                  float unquantMultiplier, uint32_t rowsA,
                                  uint32_t width, uint32_t colsB,
                                  uint32_t output, uint8_t* memBase);
-#else
-// The same intrinsic function with reduced no. of arguments (using structure
-// approach)
-int32_t intrI8MultiplyAndAddBias(wasm::Instance* instance,
-                                 uint32_t inputMatrixAPrepared,
-                                 uint32_t inputMatrixBPrepared,
-                                 uint32_t inputBiasPrepared,
-                                 float unquantMultiplier, uint32_t rowsA,
-                                 uint32_t width, uint32_t colsB,
-                                 uint32_t output, uint8_t* memBase);
-#endif
 
 // int8_select_columns_of_b(inputMatrixBPrepared: i32, rowsB: i32, colsB: i32,
 // colIndexList: i32, sizeColIndexList: i32, output: i32)

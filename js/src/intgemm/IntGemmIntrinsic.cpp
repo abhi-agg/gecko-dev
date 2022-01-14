@@ -330,7 +330,6 @@ int32_t js::intgemm::intrI8PrepareBias(
   return 0;
 }
 
-#if 1
 int32_t js::intgemm::intrI8MultiplyAndAddBias(
     wasm::Instance* instance, uint32_t inputMatrixAPrepared, float scaleA,
     float zeroPointA, uint32_t inputMatrixBPrepared, float scaleB,
@@ -406,80 +405,6 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   // fprintf(stderr, "Done Int8Shift::Multiply\n");
   return 0;
 }
-#else
-int32_t js::intgemm::intrI8MultiplyAndAddBias(
-    wasm::Instance* instance, uint32_t inputMatrixAPrepared,
-    uint32_t inputMatrixBPrepared, uint32_t inputBiasPrepared,
-    float unquantMultiplier, uint32_t rowsA, uint32_t width, uint32_t colsB,
-    uint32_t output, uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
-
-  // Size checks for matricies
-  uint64_t matrixASize = (uint64_t)rowsA * (uint64_t)width;
-  uint64_t matrixBSize = (uint64_t)width * (uint64_t)colsB;
-  uint64_t inputBiasSize = (uint64_t)colsB;
-  uint64_t outputSize = (uint64_t)rowsA * (uint64_t)colsB;
-  if ((matrixASize == 0) || (matrixBSize == 0) ||
-      (rowsA % ROWS_A_MULTIPLIER != 0) || (width % COLUMNS_A_MULTIPLIER != 0) ||
-      (colsB % COLUMNS_B_MULTIPLIER != 0)) {
-    ReportError(JSMSG_WASM_UNREACHABLE);
-    return -1;
-  }
-
-  // Memory Bound checks for all matricies
-  constexpr uint64_t STRUCT_SIZE = 12;
-  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, STRUCT_SIZE, memBase) ||
-      !isMemoryBoundCheckPassed(inputMatrixBPrepared, STRUCT_SIZE, memBase) ||
-      !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize, memBase) ||
-      !isMemoryBoundCheckPassed(output, outputSize, memBase)) {
-    ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
-    return -1;
-  }
-
-  uint32_t* structA = (uint32_t*)(&memBase[inputMatrixAPrepared]);
-  uint32_t* structB = (uint32_t*)(&memBase[inputMatrixBPrepared]);
-  if (!isMemoryBoundCheckPassed(*structA, matrixASize, memBase) ||
-      !isMemoryBoundCheckPassed(*structB, matrixBSize, memBase)) {
-    ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
-    return -1;
-  }
-
-  uint8_t* inputMatrixAPreparedPtr = &memBase[*structA];
-  uint8_t* inputMatrixBPreparedPtr = &memBase[*structB];
-  uint8_t* inputBiasPreparedPtr = &memBase[inputBiasPrepared];
-  uint8_t* outputPtr = &memBase[output];
-  float scaleA = *((float*)structA + 1);
-  float scaleB = *((float*)structB + 1);
-  float unquantFactor = unquantMultiplier / (scaleA * scaleB);
-
-  // Pointer Alignment checks for matricies
-  if (!isAlignmentCheckPassed(inputMatrixAPreparedPtr) ||
-      !isAlignmentCheckPassed(inputMatrixBPreparedPtr)) {
-    ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
-    return -1;
-  }
-
-  fprintf(stderr,
-          "\n%s:\n Ap:%p   Bp:%p   bias_p:%p   output:%p   "
-          "unquantFactor:%f   rowsA:%" PRIu32 "   width:%" PRIu32
-          "   colsB:%" PRIu32
-          "   Ap_align:%u   Bp_align:%u   bias_p_align:%u   output_align:%u\n",
-          __FUNCTION__, inputMatrixAPreparedPtr, inputMatrixBPreparedPtr,
-          inputBiasPreparedPtr, outputPtr, unquantFactor, rowsA, width, colsB,
-          computeAlignment((void*)inputMatrixAPreparedPtr),
-          computeAlignment((void*)inputMatrixBPreparedPtr),
-          computeAlignment((void*)inputBiasPreparedPtr),
-          computeAlignment((void*)outputPtr));
-  ::intgemm::Int8Shift::Multiply(
-      (const int8_t*)inputMatrixAPreparedPtr,
-      (const int8_t*)inputMatrixBPreparedPtr, rowsA, width, colsB,
-      ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-          unquantFactor, (const float*)inputBiasPreparedPtr,
-          (float*)outputPtr));
-  // fprintf(stderr, "Done Int8Shift::Multiply\n");
-  return 0;
-}
-#endif
 
 int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             uint32_t inputMatrixBPrepared,

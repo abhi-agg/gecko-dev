@@ -304,23 +304,6 @@
     - I32
     - I32
 
-# The I8MultiplyAndAddBias intrinsic but with reduced no. of arguments (using structure approach)
-# - op: I8MultiplyAndAddBias
-#   symbolic_address:
-#     name: IntrI8MultiplyAndAddBias
-#     type: Args_Int32_GeneralInt32Int32Int32Float32Int32Int32Int32Int32General
-#   entry: intgemm::intrI8MultiplyAndAddBias
-#   export: int8_multiply_and_add_bias
-#   params:
-#     - I32
-#     - I32
-#     - I32
-#     - F32
-#     - I32
-#     - I32
-#     - I32
-#     - I32
-
 
 # Select a subset of columns of prepared B.
 #
