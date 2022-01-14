@@ -160,8 +160,8 @@ enum class FailureMode : uint8_t {
 // SymbolicAddressSignature carries type information for a function referred
 // to by a SymbolicAddress.  In order that |argTypes| can be written out as a
 // static initialiser, it has to have fixed length.  At present
-// SymbolicAddressType is used to describe functions with at most 6 arguments,
-// so |argTypes| has 7 entries in order to allow the last value to be
+// SymbolicAddressType is used to describe functions with at most 14 arguments,
+// so |argTypes| has 15 entries in order to allow the last value to be
 // MIRType::None, in the hope of catching any accidental overruns of the
 // defined section of the array.
 
@@ -181,14 +181,14 @@ struct SymbolicAddressSignature {
   const jit::MIRType argTypes[SymbolicAddressSignatureMaxArgs + 1];
 };
 
-// The 16 in this assertion is derived as follows: SymbolicAddress is probably
+// The 32 in this assertion is derived as follows: SymbolicAddress is probably
 // size-4 aligned-4, but it's at the start of the struct, so there's no
 // alignment hole before it.  All other components (MIRType and uint8_t) are
-// size-1 aligned-1, and there are 8 in total, so it is reasonable to assume
+// size-1 aligned-1, and there are 18 in total, so it is reasonable to assume
 // that they also don't create any alignment holes.  Hence it is also
-// reasonable to assume that the actual size is 1 * 4 + 8 * 1 == 12.  The
-// worst-plausible-case rounding will take that up to 16.  Hence, the
-// assertion uses 16.
+// reasonable to assume that the actual size is 1 * 4 + 18 * 1 == 22.  The
+// worst-plausible-case rounding will take that up to 32.  Hence, the
+// assertion uses 32.
 
 static_assert(sizeof(SymbolicAddressSignature) <= 32,
               "SymbolicAddressSignature unexpectedly large");
