@@ -92,8 +92,12 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                                     uint32_t colsB, uint32_t outputMatrixB,
                                     uint8_t* memBase) {
   fprintf(stderr,
-          "intrI8PrepareB called with inputMatrixB:%d outputMatrixB:%d\n",
-          inputMatrixB, outputMatrixB);
+          "\n%s: inputMatrixB:%x" PRIu32
+          "  scale:%f  zeroPoint:%f  "
+          "rowsB:%" PRIu32 "  colsB:%" PRIu32
+          "  outputMatrixB:%x" PRIu32 "\n",
+          __FUNCTION__, inputMatrixB, scale, zeroPoint,
+          rowsB, colsB, outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
@@ -132,7 +136,6 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                             (int8_t*)outputMatrixBPtr,
                             (float)scale,  // Quant Mult
                             rowsB, colsB);
-  // fprintf(stderr, "Done Int8::PrepareB\n");
   return 0;
 }
 
@@ -140,6 +143,13 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBTransposed, float scale,
     float zeroPoint, uint32_t rowsB, uint32_t colsB, uint32_t outputMatrixB,
     uint8_t* memBase) {
+  fprintf(stderr,
+          "\n%s: inputMatrixBTransposed:%x" PRIu32
+          "  scale:%f  zeroPoint:%f  "
+          "rowsB:%" PRIu32 "  colsB:%" PRIu32
+          "  outputMatrixB:%x" PRIu32 "\n",
+          __FUNCTION__, inputMatrixBTransposed, scale, zeroPoint,
+          rowsB, colsB, outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
@@ -184,6 +194,12 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
 int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
     uint32_t rowsB, uint32_t colsB, uint32_t outputMatrixB, uint8_t* memBase) {
+  fprintf(stderr,
+          "\n%s: inputMatrixBQuantizedTransposed:%x" PRIu32
+          "  rowsB:%" PRIu32 "  colsB:%" PRIu32
+          "  outputMatrixB:%x" PRIu32 "\n",
+          __FUNCTION__, inputMatrixBQuantizedTransposed,
+          rowsB, colsB, outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
@@ -213,6 +229,7 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     return -1;
   }
 
+  // Actual call to the 3rd party library (intgemm)
   fprintf(
       stderr,
       "%s: Bqt:%p   Bp:%p   "
@@ -223,7 +240,6 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   ::intgemm::Int8::PrepareBQuantizedTransposed(
       (const int8_t*)inputMatrixBQuantizedTransposedPtr,
       (int8_t*)outputMatrixBPtr, rowsB, colsB);
-  // fprintf(stderr, "Done Int8::PrepareBQuantizedTransposed\n");
   return 0;
 }
 
@@ -232,6 +248,13 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
                                     float zeroPoint, uint32_t rowsA,
                                     uint32_t colsA, uint32_t outputMatrixA,
                                     uint8_t* memBase) {
+  fprintf(stderr,
+          "\n%s: inputMatrixA:%x" PRIu32
+          "  scale:%f  zeroPoint:%f  "
+          "rowsA:%" PRIu32 "  colsA:%" PRIu32
+          "  outputMatrixA:%x" PRIu32 "\n",
+          __FUNCTION__, inputMatrixA, scale, zeroPoint,
+          rowsA, colsA, outputMatrixA);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
@@ -259,6 +282,7 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
     return -1;
   }
 
+  // Actual call to the 3rd party library (intgemm)
   fprintf(stderr,
           "\n%s: A:%p   Ap:%p   "
           "rowsA:%" PRIu32 "   width:%" PRIu32 "   A_align:%u   Ap_align:%u\n",
@@ -268,7 +292,6 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixAPtr,
                                  (int8_t*)outputMatrixAPtr, scale, rowsA,
                                  colsA);
-  // fprintf(stderr, "Done Int8Shift::PrepareA\n");
   return 0;
 }
 
@@ -276,6 +299,14 @@ int32_t js::intgemm::intrI8PrepareBias(
     wasm::Instance* instance, uint32_t inputMatrixBPrepared, float scaleA,
     float zeroPointA, float scaleB, float zeroPointB, uint32_t rowsB,
     uint32_t colsB, uint32_t inputBias, uint32_t output, uint8_t* memBase) {
+  fprintf(stderr,
+          "\n%s: inputMatrixBPrepared:%x" PRIu32
+          "  scaleA:%f  zeroPointA:%f  "
+          "  scaleB:%f  zeroPointB:%f  "
+          "rowsB:%" PRIu32 "  colsB:%" PRIu32
+          "  inputBias:%x" PRIu32 "  output:%x" PRIu32 "\n",
+          __FUNCTION__, inputMatrixBPrepared, scaleA, zeroPointA,
+          scaleB, zeroPointB, rowsB, colsB, inputBias, output);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
@@ -306,6 +337,7 @@ int32_t js::intgemm::intrI8PrepareBias(
     return -1;
   }
 
+  // Actual call to the 3rd party library (intgemm)
   fprintf(stderr,
           "\n%s: Bp:%p   bias:%p   bias_p:%p   "
           "unquantFactor:%f   width:%" PRIu32 "   colsB:%" PRIu32
@@ -319,7 +351,6 @@ int32_t js::intgemm::intrI8PrepareBias(
       (const int8_t*)inputMatrixBPreparedPtr, rowsB, colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPtr, (float*)outputPtr));
-  // fprintf(stderr, "Done Int8Shift::PrepareBias\n");
   return 0;
 }
 
@@ -330,7 +361,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     uint32_t rowsA, uint32_t width, uint32_t colsB, uint32_t output,
     uint8_t* memBase) {
   fprintf(stderr,
-          "\n%s:\ninputMatrixAPrepared:%x" PRIu32
+          "\n%s: inputMatrixAPrepared:%x" PRIu32
           "  scaleA:%f  zeroPointA:%f  "
           "inputMatrixBPrepared:%x" PRIu32
           "  scaleB:%f  zeroPointB:%f  "
@@ -378,6 +409,7 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     return -1;
   }
 
+  // Actual call to the 3rd party library (intgemm)
   fprintf(stderr,
           "%s: Ap:%p   Bp:%p   bias_p:%p   output:%p   "
           "unquantFactor:%f   rowsA:%" PRIu32 "   width:%" PRIu32
@@ -395,7 +427,6 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
           unquantFactor, (const float*)inputBiasPreparedPtr,
           (float*)outputPtr));
-  // fprintf(stderr, "Done Int8Shift::Multiply\n");
   return 0;
 }
 
@@ -405,6 +436,13 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             uint32_t colIndexList,
                                             uint32_t sizeColIndexList,
                                             uint32_t output, uint8_t* memBase) {
+  fprintf(stderr,
+          "\n%s: inputMatrixBPrepared:%x" PRIu32
+          "  rowsB:%" PRIu32 "  colsB:%" PRIu32
+          "  colIndexList:%x" PRIu32 "  sizeColIndexList:%" PRIu32
+          "  output:%x" PRIu32 "\n",
+          __FUNCTION__, inputMatrixBPrepared, rowsB, colsB,
+          colIndexList, sizeColIndexList, output);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
@@ -435,11 +473,10 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
     return -1;
   }
 
-  fprintf(stderr, "Calling Int8::SelectColumnsB\n");
+  // Actual call to the 3rd party library (intgemm)
   ::intgemm::Int8::SelectColumnsB(
       (const int8_t*)inputMatrixBPreparedPtr, (int8_t*)outputPtr, rowsB,
       (const uint32_t*)colIndexListPtr,
       (const uint32_t*)colIndexListPtr + sizeColIndexList);
-  fprintf(stderr, "Done Int8::SelectColumnsB\n");
   return 0;
 }
