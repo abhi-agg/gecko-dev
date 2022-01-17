@@ -74,9 +74,9 @@ size_t getWasmRawBufferLength(const uint8_t* memBase) {
 bool isMemoryBoundCheckPassed(uint32_t input, uint64_t inputSize,
                               const uint8_t* memBase) {
   size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
-  // ToDo: Deal with arithmetic overflow
   uint64_t inputUpperLimit = (uint64_t)input + inputSize;
-  return (inputUpperLimit < wasmBufferLimit);
+  bool overflow = (inputUpperLimit < inputSize);
+  return !overflow && (inputUpperLimit < wasmBufferLimit);
 }
 
 bool isAlignmentCheckPassed(const uint8_t* ptr) {
