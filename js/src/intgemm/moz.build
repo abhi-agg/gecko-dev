@@ -20,7 +20,7 @@ LOCAL_INCLUDES += [
 
 SOURCES += [
     "/third_party/intgemm/intgemm/intgemm.cc",
-    "IntGemmIntrinsic.cpp",
+    "IntegerGemmIntrinsic.cpp",
 ]
 
 GeneratedFile(
