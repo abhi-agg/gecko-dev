@@ -123,11 +123,13 @@ int32_t intrI8PrepareB(wasm::Instance* instance, uint32_t inputMatrixB,
  * @param[in]   scale                  The scaling factor (for quantization)
  * @param[in]   zeroPoint              The zero point (for quantization)
  * @param[in]   rowsB                  No. of rows of Input matrix B. It should
- *                                     be a positive integer and a multiple of 64.
+ *                                     be a positive integer and a multiple of
+ *                                     64.
  * @param[in]   colsB                  No. of columns of Input matrix B. It
- *                                     should be a positive integer and a multiple of 8.
+ *                                     should be a positive integer and a
+ *                                     multiple of 8.
  * @param[out]  outputMatrixB          An array representing the prepared B
- *                                     matrix. Size of the array = `rowsB` * `colsB`.
+ *                                     matrix. Size of array = `rowsB`*`colsB`
  *
  * This function implements the intrinsic:
  *   int8_prepare_b_from_transposed(inputMatrixBTransposed: i32, scale: f32,
@@ -155,9 +157,10 @@ int32_t intrI8PrepareBFromTransposed(wasm::Instance* instance,
  *                                               quantized and transposed
  *                                               version of Input matrix B.
  *                                               It is in column-major format.
- *                                               Size of array = `rowsB` * `colsB`.
+ *                                               Size of array =
+ *                                                 `rowsB`*`colsB`
  *                                               Shape of the matrix:
- *                                               (`colsB`,`rowsB`)
+ *                                                 (`colsB`,`rowsB`)
  * @param[in]   rowsB                            No. of rows of Input matrix B.
  *                                               Should be a positive integer
  *                                               and a multiple of 64.
@@ -224,7 +227,7 @@ int32_t intrI8PrepareA(wasm::Instance* instance, uint32_t inputMatrixA,
  * (`int8_multiply_and_add_bias`).
  *
  * @param[in]   inputMatrixBPrepared An array representing the prepared B
- *                                   matrix. Size of the array = `rowsB` * `colsB`.
+ *                                   matrix. Size of array = `rowsB`*`colsB`.
  * @param[in]   scaleA               The scaling factor (for quantization) of A
  * @param[in]   zeroPointA           The zero point (for quantization) of A
  * @param[in]   scaleB               The scaling factor (for quantization) of B
@@ -326,7 +329,8 @@ int32_t intrI8MultiplyAndAddBias(wasm::Instance* instance,
  *                                    one of the `int8_prepare_b*` functions.
  *                                    Size of the array = `rowsB` * `colsB`.
  * @param[in]   rowsB                 No. of rows of Input matrix B. It should
- *                                    be a positive integer and a multiple of 64.
+ *                                    be a positive integer and a multiple
+ *                                    of 64.
  * @param[in]   colsB                 No. of columns of Input matrix B. It
  *                                    should be a positive integer and a
  *                                    multiple of 8.
