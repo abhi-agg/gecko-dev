@@ -27,32 +27,15 @@ static mozilla::LazyLogModule gIntegerGemmLog("IntegerGemmLog");
 namespace js {
 namespace intgemm {
 
-unsigned computePointerAlignment(void* address) {
-  auto ptr = reinterpret_cast<std::uintptr_t>(address);
-  unsigned alignment = 512;
-
-  while ((alignment > 1) && (ptr % alignment != 0)) {
-    alignment = alignment >> 1;
-  }
-  return alignment;
-}
-
 void ReportError(const unsigned errorNumber) {
   JSContext* cx = TlsContext.get();
   JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, errorNumber);
 }
 
 size_t getWasmRawBufferLength(const uint8_t* memBase) {
-#if INTGEMM_SHARED_MEMORY
-  // TODO: Be more careful with using shared buffer
-  const js::SharedArrayRawBuffer* rawBuf =
-      js::SharedArrayRawBuffer::fromDataPtr(memBase);
-  return rawBuf->volatileByteLength();
-#else
   const js::WasmArrayRawBuffer* rawBuf =
       js::WasmArrayRawBuffer::fromDataPtr(memBase);
   return rawBuf->byteLength();
-#endif
 }
 
 bool isMemoryBoundCheckPassed(uint32_t input, uint64_t inputSize,
