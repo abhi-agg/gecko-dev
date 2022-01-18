@@ -201,11 +201,6 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   }
 
   // Actual call to the 3rd party library (intgemm)
-  LOG(Debug,
-      "%s: inputMatrixBQuantizedTransposedPtr:%p  outputMatrixBPtr:%p  "
-      "rowsB:%" PRIu32 "  colsB:%" PRIu32,
-      __FUNCTION__, inputMatrixBQuantizedTransposedPtr, outputMatrixBPtr, rowsB,
-      colsB);
   ::intgemm::Int8::PrepareBQuantizedTransposed(
       (const int8_t*)inputMatrixBQuantizedTransposedPtr,
       (int8_t*)outputMatrixBPtr, rowsB, colsB);
