@@ -19,40 +19,6 @@
 #if defined(ENABLE_WASM_MOZ_INTGEMM)
 
 # Intrinsics for integer matrix multiplication followed by addition of bias.
-#
-# C = A * B + Bias
-#
-# Input matrix A:
-#   - is a 2-D matrix that typically represents activations as floating point values
-#   - no. of rows should be a positive integer
-#   - no. of columns should be a positive integer and an integral multiple of 64
-#   - is represented as array (contiguous memory locations) in row-major format
-#
-# Input matrix B:
-#   - is a 2-D matrix that typically represents fixed model parameters as floating point values
-#   - no. of rows should be:
-#     -- equal to no. of columns of Input matrix A
-#     -- a positive integer and an integral multiple of 64
-#   - no. of columns should be a positive integer and an integral multiple of 8
-#   - is represented as array (contiguous memory locations) in row-major format
-#
-#   Please note that it is also possible to pass Input matrix B in 2 more forms:
-#    - One that is already a quantized and transposed version of Input matrix B
-#    - Other that is already a transposed version of Input matrix B
-#
-# Input Bias:
-#   - is an array (contiguous memory locations) that represents bias
-#   - size of the array = No. of columns of Input matrix B
-#
-# Output matrix C:
-#   - is a 2-D matrix that represents the result (= A * B + Bias)
-#   - no. of rows will be equal to no. of rows of Input matrix A
-#   - no. of columns will be equal to no. of columns of Input matrix B (in untransposed form)
-#   - is represented as array (contiguous memory locations) in row-major format
-#
-# Please note that most of the intrinsics here might have architecture specific
-# implementations.
-#
 # Please refer to @TOPSRCDIR/js/src/intgemm/IntegerGemmIntrinsic.h for more details on these intrinsics.
 
 
