@@ -19,16 +19,15 @@
 
 using namespace js::wasm;
 
-namespace mozilla {
+// Logger for integer gemm
 static mozilla::LazyLogModule gIntegerGemmLog("IntegerGemmLog");
 #define LOG(level, ...) \
   MOZ_LOG(gIntegerGemmLog, mozilla::LogLevel::level, (__VA_ARGS__))
-}  // namespace mozilla
 
 namespace js {
 namespace intgemm {
 
-unsigned computeAlignment(void* address) {
+unsigned computePointerAlignment(void* address) {
   auto ptr = reinterpret_cast<std::uintptr_t>(address);
   if ((ptr % 512) == 0) {
     return 512;
@@ -91,19 +90,19 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                                     float zeroPoint, uint32_t rowsB,
                                     uint32_t colsB, uint32_t outputMatrixB,
                                     uint8_t* memBase) {
-  fprintf(stderr,
-          "\n%s: inputMatrixB:%x" PRIu32
-          "  scale:%f  zeroPoint:%f  "
-          "rowsB:%" PRIu32 "  colsB:%" PRIu32
-          "  outputMatrixB:%x" PRIu32 "\n",
-          __FUNCTION__, inputMatrixB, scale, zeroPoint,
-          rowsB, colsB, outputMatrixB);
+  LOG(Debug,
+      "%s: inputMatrixB:%x  scale:%f  zeroPoint:%f  rowsB:%" PRIu32
+      "  colsB:%" PRIu32 "  outputMatrixB:%x",
+      __FUNCTION__, inputMatrixB, scale, zeroPoint, rowsB, colsB,
+      outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   if ((matrixSize == 0) || (rowsB % ROWS_B_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
+    LOG(Debug, "%s: Matrix size checks failed.  matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_UNREACHABLE);
     return -1;
   }
@@ -111,27 +110,26 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   // Memory Bound checks for all matricies
   if (!isMemoryBoundCheckPassed(inputMatrixB, matrixSize, memBase) ||
       !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
+    LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
 
   uint8_t* inputMatrixBPtr = &memBase[inputMatrixB];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
+  LOG(Debug, "%s: inputMatrixBPtr:%p  outputMatrixBPtr:%p", __FUNCTION__,
+      inputMatrixBPtr, outputMatrixBPtr);
 
   // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBPtr) ||
       !isAlignmentCheckPassed(outputMatrixBPtr)) {
+    LOG(Debug, "%s: Pointer alignment checks failed.", __FUNCTION__);
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
   }
 
   // Actual call to the 3rd party library (intgemm) for PrepareB
-  fprintf(stderr,
-          "%s: B:%p   Bp:%p   width:%" PRIu32 "   colsB:%" PRIu32
-          "   B_align:%u   Bp_align:%u\n",
-          __FUNCTION__, inputMatrixBPtr, outputMatrixBPtr, rowsB, colsB,
-          computeAlignment((void*)inputMatrixBPtr),
-          computeAlignment((void*)outputMatrixBPtr));
   ::intgemm::Int8::PrepareB((const float*)inputMatrixBPtr,
                             (int8_t*)outputMatrixBPtr,
                             (float)scale,  // Quant Mult
@@ -143,19 +141,19 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBTransposed, float scale,
     float zeroPoint, uint32_t rowsB, uint32_t colsB, uint32_t outputMatrixB,
     uint8_t* memBase) {
-  fprintf(stderr,
-          "\n%s: inputMatrixBTransposed:%x" PRIu32
-          "  scale:%f  zeroPoint:%f  "
-          "rowsB:%" PRIu32 "  colsB:%" PRIu32
-          "  outputMatrixB:%x" PRIu32 "\n",
-          __FUNCTION__, inputMatrixBTransposed, scale, zeroPoint,
-          rowsB, colsB, outputMatrixB);
+  LOG(Debug,
+      "%s: inputMatrixBTransposed:%x  scale:%f  zeroPoint:%f  rowsB:%" PRIu32
+      "  colsB:%" PRIu32 "  outputMatrixB:%x",
+      __FUNCTION__, inputMatrixBTransposed, scale, zeroPoint, rowsB, colsB,
+      outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   if ((matrixSize == 0) || (rowsB % ROWS_B_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
+    LOG(Debug, "%s: Matrix size checks failed.  matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_UNREACHABLE);
     return -1;
   }
@@ -163,27 +161,26 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
   // Memory Bound checks for all matricies
   if (!isMemoryBoundCheckPassed(inputMatrixBTransposed, matrixSize, memBase) ||
       !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
+    LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
 
   uint8_t* inputMatrixBTransposedPtr = &memBase[inputMatrixBTransposed];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
+  LOG(Debug, "%s: inputMatrixBTransposedPtr:%p  outputMatrixBPtr:%p",
+      __FUNCTION__, inputMatrixBTransposedPtr, outputMatrixBPtr);
 
   // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBTransposedPtr) ||
       !isAlignmentCheckPassed(outputMatrixBPtr)) {
+    LOG(Debug, "%s: Pointer alignment checks failed.", __FUNCTION__);
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
   }
 
   // Actual call to the 3rd party library (intgemm) for PrepareBTransposed
-  fprintf(stderr,
-          "%s: Bt:%p   Bp:%p   width:%" PRIu32 "   colsB:%" PRIu32
-          "   Bt_align:%u   Bp_align:%u\n",
-          __FUNCTION__, inputMatrixBTransposedPtr, outputMatrixBPtr, rowsB,
-          colsB, computeAlignment((void*)inputMatrixBTransposedPtr),
-          computeAlignment((void*)outputMatrixBPtr));
   ::intgemm::Int8::PrepareBTransposed((const float*)inputMatrixBTransposedPtr,
                                       (int8_t*)outputMatrixBPtr,
                                       (float)scale,  // Quant Mult
@@ -194,18 +191,19 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
 int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
     uint32_t rowsB, uint32_t colsB, uint32_t outputMatrixB, uint8_t* memBase) {
-  fprintf(stderr,
-          "\n%s: inputMatrixBQuantizedTransposed:%x" PRIu32
-          "  rowsB:%" PRIu32 "  colsB:%" PRIu32
-          "  outputMatrixB:%x" PRIu32 "\n",
-          __FUNCTION__, inputMatrixBQuantizedTransposed,
-          rowsB, colsB, outputMatrixB);
+  LOG(Debug,
+      "%s: inputMatrixBQuantizedTransposed:%x  rowsB:%" PRIu32
+      "  colsB:%" PRIu32 "  outputMatrixB:%x",
+      __FUNCTION__, inputMatrixBQuantizedTransposed, rowsB, colsB,
+      outputMatrixB);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   if ((matrixSize == 0) || (rowsB % ROWS_B_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
+    LOG(Debug, "%s: Matrix size checks failed.  matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_UNREACHABLE);
     return -1;
   }
@@ -214,6 +212,8 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   if (!isMemoryBoundCheckPassed(inputMatrixBQuantizedTransposed, matrixSize,
                                 memBase) ||
       !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
+    LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -221,22 +221,23 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   uint8_t* inputMatrixBQuantizedTransposedPtr =
       &memBase[inputMatrixBQuantizedTransposed];
   uint8_t* outputMatrixBPtr = &memBase[outputMatrixB];
+  LOG(Debug, "%s: inputMatrixBQuantizedTransposedPtr:%p  outputMatrixBPtr:%p",
+      __FUNCTION__, inputMatrixBQuantizedTransposedPtr, outputMatrixBPtr);
 
   // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBQuantizedTransposedPtr) ||
       !isAlignmentCheckPassed(outputMatrixBPtr)) {
+    LOG(Debug, "%s: Pointer alignment checks failed.", __FUNCTION__);
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
   }
 
   // Actual call to the 3rd party library (intgemm)
-  fprintf(
-      stderr,
-      "%s: Bqt:%p   Bp:%p   "
-      "width:%" PRIu32 "   colsB:%" PRIu32 "   Bqt_align:%u   Bp_align:%u\n",
+  LOG(Debug,
+      "%s: inputMatrixBQuantizedTransposedPtr:%p  outputMatrixBPtr:%p  "
+      "rowsB:%" PRIu32 "  colsB:%" PRIu32,
       __FUNCTION__, inputMatrixBQuantizedTransposedPtr, outputMatrixBPtr, rowsB,
-      colsB, computeAlignment((void*)inputMatrixBQuantizedTransposedPtr),
-      computeAlignment((void*)outputMatrixBPtr));
+      colsB);
   ::intgemm::Int8::PrepareBQuantizedTransposed(
       (const int8_t*)inputMatrixBQuantizedTransposedPtr,
       (int8_t*)outputMatrixBPtr, rowsB, colsB);
@@ -248,19 +249,19 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
                                     float zeroPoint, uint32_t rowsA,
                                     uint32_t colsA, uint32_t outputMatrixA,
                                     uint8_t* memBase) {
-  fprintf(stderr,
-          "\n%s: inputMatrixA:%x" PRIu32
-          "  scale:%f  zeroPoint:%f  "
-          "rowsA:%" PRIu32 "  colsA:%" PRIu32
-          "  outputMatrixA:%x" PRIu32 "\n",
-          __FUNCTION__, inputMatrixA, scale, zeroPoint,
-          rowsA, colsA, outputMatrixA);
+  LOG(Debug,
+      "%s: inputMatrixA:%x  scale:%f  zeroPoint:%f  rowsA:%" PRIu32
+      "  colsA:%" PRIu32 "  outputMatrixA:%x",
+      __FUNCTION__, inputMatrixA, scale, zeroPoint, rowsA, colsA,
+      outputMatrixA);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsA * (uint64_t)colsA;
   if ((matrixSize == 0) || (rowsA % ROWS_A_MULTIPLIER != 0) ||
       (colsA % COLUMNS_A_MULTIPLIER != 0)) {
+    LOG(Debug, "%s: Matrix size checks failed.  matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_UNREACHABLE);
     return -1;
   }
@@ -268,27 +269,26 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   // Memory Bound checks for all matricies
   if (!isMemoryBoundCheckPassed(inputMatrixA, matrixSize, memBase) ||
       !isMemoryBoundCheckPassed(outputMatrixA, matrixSize, memBase)) {
+    LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
 
   uint8_t* inputMatrixAPtr = &memBase[inputMatrixA];
   uint8_t* outputMatrixAPtr = &memBase[outputMatrixA];
+  LOG(Debug, "%s: inputMatrixAPtr:%p  outputMatrixAPtr:%p", __FUNCTION__,
+      inputMatrixAPtr, outputMatrixAPtr);
 
   // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixAPtr) ||
       !isAlignmentCheckPassed(outputMatrixAPtr)) {
+    LOG(Debug, "%s: Pointer alignment checks failed.", __FUNCTION__);
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
   }
 
   // Actual call to the 3rd party library (intgemm)
-  fprintf(stderr,
-          "\n%s: A:%p   Ap:%p   "
-          "rowsA:%" PRIu32 "   width:%" PRIu32 "   A_align:%u   Ap_align:%u\n",
-          __FUNCTION__, inputMatrixAPtr, outputMatrixAPtr, rowsA, colsA,
-          computeAlignment((void*)inputMatrixAPtr),
-          computeAlignment((void*)outputMatrixAPtr));
   ::intgemm::Int8Shift::PrepareA((const float*)inputMatrixAPtr,
                                  (int8_t*)outputMatrixAPtr, scale, rowsA,
                                  colsA);
@@ -299,20 +299,20 @@ int32_t js::intgemm::intrI8PrepareBias(
     wasm::Instance* instance, uint32_t inputMatrixBPrepared, float scaleA,
     float zeroPointA, float scaleB, float zeroPointB, uint32_t rowsB,
     uint32_t colsB, uint32_t inputBias, uint32_t output, uint8_t* memBase) {
-  fprintf(stderr,
-          "\n%s: inputMatrixBPrepared:%x" PRIu32
-          "  scaleA:%f  zeroPointA:%f  "
-          "  scaleB:%f  zeroPointB:%f  "
-          "rowsB:%" PRIu32 "  colsB:%" PRIu32
-          "  inputBias:%x" PRIu32 "  output:%x" PRIu32 "\n",
-          __FUNCTION__, inputMatrixBPrepared, scaleA, zeroPointA,
-          scaleB, zeroPointB, rowsB, colsB, inputBias, output);
+  LOG(Debug,
+      "%s: inputMatrixBPrepared:%x  scaleA:%f  zeroPointA:%f  scaleB:%f  "
+      "zeroPointB:%f  rowsB:%" PRIu32 "  colsB:%" PRIu32
+      "  inputBias:%x  outputBias:%x",
+      __FUNCTION__, inputMatrixBPrepared, scaleA, zeroPointA, scaleB,
+      zeroPointB, rowsB, colsB, inputBias, output);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
   if ((matrixSize == 0) || (rowsB % ROWS_B_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
+    LOG(Debug, "%s: Matrix size checks failed.  matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_UNREACHABLE);
     return -1;
   }
@@ -321,6 +321,8 @@ int32_t js::intgemm::intrI8PrepareBias(
   if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize, memBase) ||
       !isMemoryBoundCheckPassed(inputBias, colsB, memBase) ||
       !isMemoryBoundCheckPassed(output, colsB, memBase)) {
+    LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
+        __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -330,23 +332,20 @@ int32_t js::intgemm::intrI8PrepareBias(
   uint8_t* outputPtr = &memBase[output];
   float unquantFactor =
       (-1) * ((127.0f / scaleA) * (127.0f / scaleB)) / (127.0f);
+  LOG(Debug,
+      "%s: inputMatrixBPreparedPtr:%p  inputBiasPtr:%p  outputBiasPtr:%p  "
+      "unquantFactor:%f",
+      __FUNCTION__, inputMatrixBPreparedPtr, inputBiasPtr, outputPtr,
+      unquantFactor);
 
   // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBPreparedPtr)) {
+    LOG(Debug, "%s: Pointer alignment checks failed.", __FUNCTION__);
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
   }
 
   // Actual call to the 3rd party library (intgemm)
-  fprintf(stderr,
-          "\n%s: Bp:%p   bias:%p   bias_p:%p   "
-          "unquantFactor:%f   width:%" PRIu32 "   colsB:%" PRIu32
-          "   Bp_align:%u   bias_align:%u   bias_p_align:%u\n",
-          __FUNCTION__, inputMatrixBPreparedPtr, inputBiasPtr, outputPtr,
-          unquantFactor, rowsB, colsB,
-          computeAlignment((void*)inputMatrixBPreparedPtr),
-          computeAlignment((void*)inputBiasPtr),
-          computeAlignment((void*)outputPtr));
   ::intgemm::Int8Shift::PrepareBias(
       (const int8_t*)inputMatrixBPreparedPtr, rowsB, colsB,
       ::intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
@@ -360,19 +359,14 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
     uint32_t rowsA, uint32_t width, uint32_t colsB, uint32_t output,
     uint8_t* memBase) {
-  fprintf(stderr,
-          "\n%s: inputMatrixAPrepared:%x" PRIu32
-          "  scaleA:%f  zeroPointA:%f  "
-          "inputMatrixBPrepared:%x" PRIu32
-          "  scaleB:%f  zeroPointB:%f  "
-          "inputBiasPrepared:%x" PRIu32
-          "  unquantMultiplier:%f  "
-          "rowsA:%" PRIu32 "  width:%" PRIu32 "  colsB:%" PRIu32
-          "  output:%x" PRIu32 "\n",
-          __FUNCTION__, inputMatrixAPrepared, scaleA, zeroPointA,
-          inputMatrixBPrepared, scaleB, zeroPointB, inputBiasPrepared,
-          unquantMultiplier, rowsA, width, colsB, output);
-
+  LOG(Debug,
+      "%s: inputMatrixAPrepared:%x  scaleA:%f  zeroPointA:%f  "
+      "inputMatrixBPrepared:%x  scaleB:%f  zeroPointB:%f  inputBiasPrepared:%x "
+      " unquantMultiplier:%f  rowsA:%" PRIu32 "  width:%" PRIu32
+      "  colsB:%" PRIu32 "  output:%x",
+      __FUNCTION__, inputMatrixAPrepared, scaleA, zeroPointA,
+      inputMatrixBPrepared, scaleB, zeroPointB, inputBiasPrepared,
+      unquantMultiplier, rowsA, width, colsB, output);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
@@ -383,6 +377,10 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   if ((matrixASize == 0) || (matrixBSize == 0) ||
       (rowsA % ROWS_A_MULTIPLIER != 0) || (width % COLUMNS_A_MULTIPLIER != 0) ||
       (colsB % COLUMNS_B_MULTIPLIER != 0)) {
+    LOG(Debug,
+        "%s: Matrix size checks failed. matrixASize:%" PRIu64
+        "  matrixBSize:%" PRIu64,
+        __FUNCTION__, matrixASize, matrixBSize);
     ReportError(JSMSG_WASM_UNREACHABLE);
     return -1;
   }
@@ -392,6 +390,11 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
       !isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixBSize, memBase) ||
       !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize, memBase) ||
       !isMemoryBoundCheckPassed(output, outputSize, memBase)) {
+    LOG(Debug,
+        "%s: Memory Bound checks failed. matrixASize:%" PRIu64
+        "  matrixBSize:%" PRIu64 "  inputBiasSize:%" PRIu64
+        "  outputSize:%" PRIu64,
+        __FUNCTION__, matrixASize, matrixBSize, inputBiasSize, outputSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -401,26 +404,21 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   uint8_t* inputBiasPreparedPtr = &memBase[inputBiasPrepared];
   uint8_t* outputPtr = &memBase[output];
   float unquantFactor = unquantMultiplier / (scaleA * scaleB);
+  LOG(Debug,
+      "%s: inputMatrixAPreparedPtr:%p  inputMatrixBPreparedPtr:%p  "
+      "inputBiasPreparedPtr:%p  outputPtr:%p  unquantFactor:%f",
+      __FUNCTION__, inputMatrixAPreparedPtr, inputMatrixBPreparedPtr,
+      inputBiasPreparedPtr, outputPtr, unquantFactor);
 
   // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixAPreparedPtr) ||
       !isAlignmentCheckPassed(inputMatrixBPreparedPtr)) {
+    LOG(Debug, "%s: Pointer alignment checks failed.", __FUNCTION__);
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
   }
 
   // Actual call to the 3rd party library (intgemm)
-  fprintf(stderr,
-          "%s: Ap:%p   Bp:%p   bias_p:%p   output:%p   "
-          "unquantFactor:%f   rowsA:%" PRIu32 "   width:%" PRIu32
-          "   colsB:%" PRIu32
-          "   Ap_align:%u   Bp_align:%u   bias_p_align:%u   output_align:%u\n",
-          __FUNCTION__, inputMatrixAPreparedPtr, inputMatrixBPreparedPtr,
-          inputBiasPreparedPtr, outputPtr, unquantFactor, rowsA, width, colsB,
-          computeAlignment((void*)inputMatrixAPreparedPtr),
-          computeAlignment((void*)inputMatrixBPreparedPtr),
-          computeAlignment((void*)inputBiasPreparedPtr),
-          computeAlignment((void*)outputPtr));
   ::intgemm::Int8Shift::Multiply(
       (const int8_t*)inputMatrixAPreparedPtr,
       (const int8_t*)inputMatrixBPreparedPtr, rowsA, width, colsB,
@@ -436,13 +434,11 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             uint32_t colIndexList,
                                             uint32_t sizeColIndexList,
                                             uint32_t output, uint8_t* memBase) {
-  fprintf(stderr,
-          "\n%s: inputMatrixBPrepared:%x" PRIu32
-          "  rowsB:%" PRIu32 "  colsB:%" PRIu32
-          "  colIndexList:%x" PRIu32 "  sizeColIndexList:%" PRIu32
-          "  output:%x" PRIu32 "\n",
-          __FUNCTION__, inputMatrixBPrepared, rowsB, colsB,
-          colIndexList, sizeColIndexList, output);
+  LOG(Debug,
+      "%s: inputMatrixBPrepared:%x  rowsB:%" PRIu32 "  colsB:%" PRIu32
+      "  colIndexList:%x  sizeColIndexList:%" PRIu32 " output:%x",
+      __FUNCTION__, inputMatrixBPrepared, rowsB, colsB, colIndexList,
+      sizeColIndexList, output);
   MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
 
   // Size checks for matricies
@@ -451,6 +447,10 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
   if ((matrixSize == 0) || (outputSize == 0) ||
       (rowsB % ROWS_B_MULTIPLIER != 0) || (colsB % COLUMNS_B_MULTIPLIER != 0) ||
       (sizeColIndexList % SELECTED_COLUMNS_B_MULTIPLIER != 0)) {
+    LOG(Debug,
+        "%s: Matrix size checks failed. matrixSize:%" PRIu64
+        "  outputSize:%" PRIu64,
+        __FUNCTION__, matrixSize, outputSize);
     ReportError(JSMSG_WASM_UNREACHABLE);
     return -1;
   }
@@ -459,6 +459,10 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
   if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize, memBase) ||
       !isMemoryBoundCheckPassed(colIndexList, sizeColIndexList, memBase) ||
       !isMemoryBoundCheckPassed(output, outputSize, memBase)) {
+    LOG(Debug,
+        "%s: Memory Bound checks failed. matrixSize:%" PRIu64
+        "  outputSize:%" PRIu64,
+        __FUNCTION__, matrixSize, outputSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
     return -1;
   }
@@ -466,9 +470,12 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
   uint8_t* inputMatrixBPreparedPtr = &memBase[inputMatrixBPrepared];
   uint8_t* colIndexListPtr = &memBase[colIndexList];
   uint8_t* outputPtr = &memBase[output];
+  LOG(Debug, "%s: inputMatrixBPreparedPtr:%p  colIndexListPtr:%p  outputPtr:%p",
+      __FUNCTION__, inputMatrixBPreparedPtr, colIndexListPtr, outputPtr);
 
   // Pointer Alignment checks for matricies
   if (!isAlignmentCheckPassed(inputMatrixBPreparedPtr)) {
+    LOG(Debug, "%s: Pointer alignment checks failed.", __FUNCTION__);
     ReportError(JSMSG_WASM_UNALIGNED_ACCESS);
     return -1;
   }
