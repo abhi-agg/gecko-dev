@@ -29,27 +29,12 @@ namespace intgemm {
 
 unsigned computePointerAlignment(void* address) {
   auto ptr = reinterpret_cast<std::uintptr_t>(address);
-  if ((ptr % 512) == 0) {
-    return 512;
-  } else if ((ptr % 256) == 0) {
-    return 256;
-  } else if ((ptr % 128) == 0) {
-    return 128;
-  } else if ((ptr % 64) == 0) {
-    return 64;
-  } else if ((ptr % 32) == 0) {
-    return 32;
-  } else if ((ptr % 16) == 0) {
-    return 16;
-  } else if ((ptr % 8) == 0) {
-    return 8;
-  } else if ((ptr % 4) == 0) {
-    return 4;
-  } else if ((ptr % 2) == 0) {
-    return 2;
-  } else {
-    return 1;
+  unsigned alignment = 512;
+
+  while ((alignment > 1) && (ptr % alignment != 0)) {
+    alignment = alignment >> 1;
   }
+  return alignment;
 }
 
 void ReportError(const unsigned errorNumber) {
