@@ -22,20 +22,9 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=650295
   SpecialPowers.pushPrefEnv({
     set: [["javascript.options.wasm_moz_intgemm", false]]
   }, function() {
-    /* var objects = [
-      "SpeechRecognition",
-      "SpeechGrammar",
-      "SpeechRecognitionResult",
-      "SpeechRecognitionResultList",
-      "SpeechRecognitionAlternative"
-    ]; */
 
     const gemm = WebAssembly.mozIntGemm();
-     for (var i = 0; i < 1; i++) {
-      is(window[gemm], undefined,
-         gemm + " should be undefined with pref off");
-    }
-
+    is(gemm, undefined, gemm + " should be undefined with pref off");
     SimpleTest.finish();
   });
 </script>
