@@ -7,6 +7,7 @@
  */
 
 #include "intgemm/IntegerGemmIntrinsic.h"
+#include "mozilla/CheckedInt.h"
 #include "mozilla/Logging.h"
 #include <intgemm.h>
 
@@ -27,6 +28,13 @@ static mozilla::LazyLogModule gIntegerGemmLog("IntegerGemmLog");
 namespace js {
 namespace intgemm {
 
+static constexpr uint8_t ARRAY_ALIGNMENT = 64;
+static constexpr uint8_t ROWS_A_MULTIPLIER = 1;
+static constexpr uint8_t COLUMNS_A_MULTIPLIER = 64;
+static constexpr uint8_t ROWS_B_MULTIPLIER = COLUMNS_A_MULTIPLIER;
+static constexpr uint8_t COLUMNS_B_MULTIPLIER = 8;
+static constexpr uint8_t SELECTED_COLUMNS_B_MULTIPLIER = 8;
+
 void ReportError(const unsigned errorNumber) {
   JSContext* cx = TlsContext.get();
   JS_ReportErrorNumberASCII(cx, GetErrorMessage, nullptr, errorNumber);
@@ -38,16 +46,20 @@ size_t getWasmRawBufferLength(const uint8_t* memBase) {
   return rawBuf->byteLength();
 }
 
+bool isOverflowCheckPassed(uint64_t value) {
+  mozilla::CheckedUint64 valueCheckedUint64(value);
+  return valueCheckedUint64.isValid();
+}
+
 bool isMemoryBoundCheckPassed(uint32_t input, uint64_t inputSize,
-                              const uint8_t* memBase) {
-  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
+                              const size_t wasmBufferLimit) {
   uint64_t inputUpperLimit = (uint64_t)input + inputSize;
-  bool overflow = (inputUpperLimit < inputSize);
-  return !overflow && (inputUpperLimit < wasmBufferLimit);
+  return isOverflowCheckPassed(inputUpperLimit) &&
+         (inputUpperLimit < wasmBufferLimit);
 }
 
 bool isAlignmentCheckPassed(const uint8_t* ptr) {
-  return ((reinterpret_cast<uintptr_t>(ptr) % MAX_REGISTER_SIZE) == 0);
+  return ((reinterpret_cast<uintptr_t>(ptr) % ARRAY_ALIGNMENT) == 0);
 }
 
 }  // namespace intgemm
@@ -76,8 +88,9 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
   }
 
   // Memory Bound checks for all matricies
-  if (!isMemoryBoundCheckPassed(inputMatrixB, matrixSize, memBase) ||
-      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
+  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
+  if (!isMemoryBoundCheckPassed(inputMatrixB, matrixSize, wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLimit)) {
     LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
         __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
@@ -128,8 +141,10 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
   }
 
   // Memory Bound checks for all matricies
-  if (!isMemoryBoundCheckPassed(inputMatrixBTransposed, matrixSize, memBase) ||
-      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
+  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
+  if (!isMemoryBoundCheckPassed(inputMatrixBTransposed, matrixSize,
+                                wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLimit)) {
     LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
         __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
@@ -179,9 +194,10 @@ int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
   }
 
   // Memory Bound checks for all matricies
+  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
   if (!isMemoryBoundCheckPassed(inputMatrixBQuantizedTransposed, matrixSize,
-                                memBase) ||
-      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, memBase)) {
+                                wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(outputMatrixB, matrixSize, wasmBufferLimit)) {
     LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
         __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
@@ -232,8 +248,9 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
   }
 
   // Memory Bound checks for all matricies
-  if (!isMemoryBoundCheckPassed(inputMatrixA, matrixSize, memBase) ||
-      !isMemoryBoundCheckPassed(outputMatrixA, matrixSize, memBase)) {
+  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
+  if (!isMemoryBoundCheckPassed(inputMatrixA, matrixSize, wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(outputMatrixA, matrixSize, wasmBufferLimit)) {
     LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
         __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
@@ -283,9 +300,11 @@ int32_t js::intgemm::intrI8PrepareBias(
   }
 
   // Memory Bound checks for all matricies
-  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize, memBase) ||
-      !isMemoryBoundCheckPassed(inputBias, colsB, memBase) ||
-      !isMemoryBoundCheckPassed(output, colsB, memBase)) {
+  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
+  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize,
+                                wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(inputBias, colsB, wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(output, colsB, wasmBufferLimit)) {
     LOG(Debug, "%s: Memory Bound checks failed. matrixSize:%" PRIu64,
         __FUNCTION__, matrixSize);
     ReportError(JSMSG_WASM_OUT_OF_BOUNDS);
@@ -352,10 +371,14 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
   }
 
   // Memory Bound checks for all matricies
-  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, matrixASize, memBase) ||
-      !isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixBSize, memBase) ||
-      !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize, memBase) ||
-      !isMemoryBoundCheckPassed(output, outputSize, memBase)) {
+  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
+  if (!isMemoryBoundCheckPassed(inputMatrixAPrepared, matrixASize,
+                                wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixBSize,
+                                wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(inputBiasPrepared, inputBiasSize,
+                                wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(output, outputSize, wasmBufferLimit)) {
     LOG(Debug,
         "%s: Memory Bound checks failed. matrixASize:%" PRIu64
         "  matrixBSize:%" PRIu64 "  inputBiasSize:%" PRIu64
@@ -423,9 +446,12 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
   }
 
   // Memory Bound checks for all matricies
-  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize, memBase) ||
-      !isMemoryBoundCheckPassed(colIndexList, sizeColIndexList, memBase) ||
-      !isMemoryBoundCheckPassed(output, outputSize, memBase)) {
+  size_t wasmBufferLimit = getWasmRawBufferLength(memBase);
+  if (!isMemoryBoundCheckPassed(inputMatrixBPrepared, matrixSize,
+                                wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(colIndexList, sizeColIndexList,
+                                wasmBufferLimit) ||
+      !isMemoryBoundCheckPassed(output, outputSize, wasmBufferLimit)) {
     LOG(Debug,
         "%s: Memory Bound checks failed. matrixSize:%" PRIu64
         "  outputSize:%" PRIu64,

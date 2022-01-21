@@ -65,13 +65,6 @@ namespace intgemm {
  *  - no. of columns of Input matrix B = `colsB`
  */
 
-static constexpr uint8_t MAX_REGISTER_SIZE = 64;
-static constexpr uint8_t ROWS_A_MULTIPLIER = 1;
-static constexpr uint8_t COLUMNS_A_MULTIPLIER = 64;
-static constexpr uint8_t ROWS_B_MULTIPLIER = COLUMNS_A_MULTIPLIER;
-static constexpr uint8_t COLUMNS_B_MULTIPLIER = 8;
-static constexpr uint8_t SELECTED_COLUMNS_B_MULTIPLIER = 8;
-
 /* Prepare B for the Matrix Multiply function from Input matrix B.
  *
  * Quantization is performed on the input.
