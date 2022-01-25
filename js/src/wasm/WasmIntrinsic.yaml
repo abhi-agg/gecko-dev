@@ -34,7 +34,7 @@
   symbolic_address:
     name: IntrI8PrepareB
     type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
-  entry: intgemm::intrI8PrepareB
+  entry: intgemm::IntrI8PrepareB
   export: int8_prepare_b
   params:
     - I32
@@ -57,7 +57,7 @@
   symbolic_address:
     name: IntrI8PrepareBFromTransposed
     type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
-  entry: intgemm::intrI8PrepareBFromTransposed
+  entry: intgemm::IntrI8PrepareBFromTransposed
   export: int8_prepare_b_from_transposed
   params:
     - I32
@@ -80,7 +80,7 @@
   symbolic_address:
     name: IntrI8PrepareBFromQuantizedTransposed
     type: Args_Int32_GeneralInt32Int32Int32Int32General
-  entry: intgemm::intrI8PrepareBFromQuantizedTransposed
+  entry: intgemm::IntrI8PrepareBFromQuantizedTransposed
   export: int8_prepare_b_from_quantized_transposed
   params:
     - I32
@@ -104,7 +104,7 @@
   symbolic_address:
     name: IntrI8PrepareA
     type: Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General
-  entry: intgemm::intrI8PrepareA
+  entry: intgemm::IntrI8PrepareA
   export: int8_prepare_a
   params:
     - I32
@@ -128,7 +128,7 @@
   symbolic_address:
     name: IntrI8PrepareBias
     type: Args_Int32_GeneralInt32Float32Float32Float32Float32Int32Int32Int32Int32General
-  entry: intgemm::intrI8PrepareBias
+  entry: intgemm::IntrI8PrepareBias
   export: int8_prepare_bias
   params:
     - I32
@@ -161,7 +161,7 @@
   symbolic_address:
     name: IntrI8MultiplyAndAddBias
     type: Args_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General
-  entry: intgemm::intrI8MultiplyAndAddBias
+  entry: intgemm::IntrI8MultiplyAndAddBias
   export: int8_multiply_and_add_bias
   params:
     - I32
@@ -188,7 +188,7 @@
   symbolic_address:
     name: IntrI8SelectColumnsOfB
     type: Args_Int32_GeneralInt32Int32Int32Int32Int32Int32General
-  entry: intgemm::intrI8SelectColumnsOfB
+  entry: intgemm::IntrI8SelectColumnsOfB
   export: int8_select_columns_of_b
   params:
     - I32

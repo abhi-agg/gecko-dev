@@ -6,8 +6,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-#ifndef IntegerGemmIntrinsic_h
-#define IntegerGemmIntrinsic_h
+#ifndef intgemm_IntegerGemmIntrinsic_h
+#define intgemm_IntegerGemmIntrinsic_h
 
 #include <stdint.h>
 
@@ -93,7 +93,7 @@ namespace intgemm {
  *   int8_prepare_b(const float* inputMatrixB, float scale, float zeroPoint,
  * uint32_t rowsB, uint32_t colsB, int8_t* outputMatrixB)
  */
-int32_t intrI8PrepareB(wasm::Instance* instance, uint32_t inputMatrixB,
+int32_t IntrI8PrepareB(wasm::Instance* instance, uint32_t inputMatrixB,
                        float scale, float zeroPoint, uint32_t rowsB,
                        uint32_t colsB, uint32_t outputMatrixB,
                        uint8_t* memBase);
@@ -131,7 +131,7 @@ int32_t intrI8PrepareB(wasm::Instance* instance, uint32_t inputMatrixB,
  * inputMatrixBTransposed, float scale, float zeroPoint, uint32_t rowsB,
  * uint32_t colsB, int8_t* outputMatrixB)
  */
-int32_t intrI8PrepareBFromTransposed(wasm::Instance* instance,
+int32_t IntrI8PrepareBFromTransposed(wasm::Instance* instance,
                                      uint32_t inputMatrixBTransposed,
                                      float scale, float zeroPoint,
                                      uint32_t rowsB, uint32_t colsB,
@@ -171,7 +171,7 @@ int32_t intrI8PrepareBFromTransposed(wasm::Instance* instance,
  * inputMatrixBQuantizedTransposed, uint32_t rowsB, uint32_t colsB, int8_t*
  * outputMatrixB)
  */
-int32_t intrI8PrepareBFromQuantizedTransposed(
+int32_t IntrI8PrepareBFromQuantizedTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
     uint32_t rowsB, uint32_t colsB, uint32_t outputMatrixB, uint8_t* memBase);
 
@@ -206,7 +206,7 @@ int32_t intrI8PrepareBFromQuantizedTransposed(
  *   int8_prepare_a(const float* inputMatrixA, float scale, float zeroPoint,
  * uint32_t rowsA, uint32_t colsA, int8_t* outputMatrixA)
  */
-int32_t intrI8PrepareA(wasm::Instance* instance, uint32_t inputMatrixA,
+int32_t IntrI8PrepareA(wasm::Instance* instance, uint32_t inputMatrixA,
                        float scale, float zeroPoint, uint32_t rowsA,
                        uint32_t colsA, uint32_t outputMatrixA,
                        uint8_t* memBase);
@@ -244,7 +244,7 @@ int32_t intrI8PrepareA(wasm::Instance* instance, uint32_t inputMatrixA,
  * zeroPointB, uint32_t rowsB, uint32_t colsB, const float* inputBias, float*
  * output)
  */
-int32_t intrI8PrepareBias(wasm::Instance* instance,
+int32_t IntrI8PrepareBias(wasm::Instance* instance,
                           uint32_t inputMatrixBPrepared, float scaleA,
                           float zeroPointA, float scaleB, float zeroPointB,
                           uint32_t rowsB, uint32_t colsB, uint32_t inputBias,
@@ -304,7 +304,7 @@ int32_t intrI8PrepareBias(wasm::Instance* instance,
  *                     uint32_t rowsA, uint32_t width, uint32_t colsB, float*
  * output)
  */
-int32_t intrI8MultiplyAndAddBias(wasm::Instance* instance,
+int32_t IntrI8MultiplyAndAddBias(wasm::Instance* instance,
                                  uint32_t inputMatrixAPrepared, float scaleA,
                                  float zeroPointA,
                                  uint32_t inputMatrixBPrepared, float scaleB,
@@ -346,7 +346,7 @@ int32_t intrI8MultiplyAndAddBias(wasm::Instance* instance,
  * uint32_t rowsB, uint32_t colsB, const uint32_t* colIndexList, const uint32_t
  * sizeColIndexList, int8_t* output)
  */
-int32_t intrI8SelectColumnsOfB(wasm::Instance* instance,
+int32_t IntrI8SelectColumnsOfB(wasm::Instance* instance,
                                uint32_t inputMatrixBPrepared, uint32_t rowsB,
                                uint32_t colsB, uint32_t colIndexList,
                                uint32_t sizeColIndexList, uint32_t output,
@@ -355,4 +355,4 @@ int32_t intrI8SelectColumnsOfB(wasm::Instance* instance,
 }  // namespace intgemm
 }  // namespace js
 
-#endif  // IntegerGemmIntrinsic_h
+#endif  // intgemm_IntegerGemmIntrinsic_h
