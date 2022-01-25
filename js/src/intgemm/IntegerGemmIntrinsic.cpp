@@ -61,7 +61,8 @@ int32_t js::intgemm::intrI8PrepareB(wasm::Instance* instance,
                                     float zeroPoint, uint32_t rowsB,
                                     uint32_t colsB, uint32_t outputMatrixB,
                                     uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrI8PrepareB.failureMode == FailureMode::FailOnNegI32);
+  MOZ_ASSERT(wasm::SASigIntrI8PrepareB.failureMode ==
+             wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
@@ -120,8 +121,8 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBTransposed, float scale,
     float zeroPoint, uint32_t rowsB, uint32_t colsB, uint32_t outputMatrixB,
     uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrI8PrepareBFromTransposed.failureMode ==
-             FailureMode::FailOnNegI32);
+  MOZ_ASSERT(wasm::SASigIntrI8PrepareBFromTransposed.failureMode ==
+             wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
@@ -181,8 +182,8 @@ int32_t js::intgemm::intrI8PrepareBFromTransposed(
 int32_t js::intgemm::intrI8PrepareBFromQuantizedTransposed(
     wasm::Instance* instance, uint32_t inputMatrixBQuantizedTransposed,
     uint32_t rowsB, uint32_t colsB, uint32_t outputMatrixB, uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrI8PrepareBFromQuantizedTransposed.failureMode ==
-             FailureMode::FailOnNegI32);
+  MOZ_ASSERT(wasm::SASigIntrI8PrepareBFromQuantizedTransposed.failureMode ==
+             wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
@@ -246,7 +247,8 @@ int32_t js::intgemm::intrI8PrepareA(wasm::Instance* instance,
                                     float zeroPoint, uint32_t rowsA,
                                     uint32_t colsA, uint32_t outputMatrixA,
                                     uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrI8PrepareA.failureMode == FailureMode::FailOnNegI32);
+  MOZ_ASSERT(wasm::SASigIntrI8PrepareA.failureMode ==
+             wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsA * (uint64_t)colsA;
@@ -304,7 +306,8 @@ int32_t js::intgemm::intrI8PrepareBias(
     wasm::Instance* instance, uint32_t inputMatrixBPrepared, float scaleA,
     float zeroPointA, float scaleB, float zeroPointB, uint32_t rowsB,
     uint32_t colsB, uint32_t inputBias, uint32_t output, uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrI8PrepareBias.failureMode == FailureMode::FailOnNegI32);
+  MOZ_ASSERT(wasm::SASigIntrI8PrepareBias.failureMode ==
+             wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
@@ -375,8 +378,8 @@ int32_t js::intgemm::intrI8MultiplyAndAddBias(
     float zeroPointB, uint32_t inputBiasPrepared, float unquantMultiplier,
     uint32_t rowsA, uint32_t width, uint32_t colsB, uint32_t output,
     uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrI8MultiplyAndAddBias.failureMode ==
-             FailureMode::FailOnNegI32);
+  MOZ_ASSERT(wasm::SASigIntrI8MultiplyAndAddBias.failureMode ==
+             wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixASize = (uint64_t)rowsA * (uint64_t)width;
@@ -468,8 +471,8 @@ int32_t js::intgemm::intrI8SelectColumnsOfB(wasm::Instance* instance,
                                             uint32_t colIndexList,
                                             uint32_t sizeColIndexList,
                                             uint32_t output, uint8_t* memBase) {
-  MOZ_ASSERT(SASigIntrI8SelectColumnsOfB.failureMode ==
-             FailureMode::FailOnNegI32);
+  MOZ_ASSERT(wasm::SASigIntrI8SelectColumnsOfB.failureMode ==
+             wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
   uint64_t matrixSize = (uint64_t)rowsB * (uint64_t)colsB;
