@@ -273,11 +273,12 @@ int32_t js::intgemm::IntrI8PrepareBias(
 
   // Memory Bound checks for all matricies
   uint64_t sizeB = (uint64_t)rowsB * (uint64_t)colsB;
+  uint64_t sizeBias = colsB;
   size_t wasmBufferSize = GetWasmRawBufferLength(memBase);
   if (!CheckMatrixBoundAndAlignment(inputMatrixBPrepared, sizeB,
                                     wasmBufferSize) ||
-      !CheckMatrixBound(inputBias, colsB, wasmBufferSize) ||
-      !CheckMatrixBound(output, colsB, wasmBufferSize)) {
+      !CheckMatrixBound(inputBias, sizeBias, wasmBufferSize) ||
+      !CheckMatrixBound(output, sizeBias, wasmBufferSize)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(cx,
               "%s: preparedB:%x  rowsB:%" PRIu32 "  colsB:%" PRIu32
