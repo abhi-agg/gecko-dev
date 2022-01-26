@@ -37,9 +37,14 @@ size_t GetWasmRawBufferLength(const uint8_t* memBase) {
   return rawBuf->byteLength();
 }
 
-bool IsValidDimension(uint32_t size, uint8_t sizeMultiplier) {
+bool CheckMatrixDimension(uint32_t size, uint8_t sizeMultiplier) {
   // Size should be a positive integer and an integral multiple of Multiplier
   if ((size == 0) || (size % sizeMultiplier != 0)) {
+    JSContext* cx = TlsContext.get();
+    wasm::Log(
+        cx, "Invalid dimension value:%" PRIu32 " (should be a multiple of %u)",
+        size, sizeMultiplier);
+    ReportError(cx, JSMSG_WASM_UNREACHABLE);
     return false;
   }
   return true;
@@ -49,14 +54,28 @@ bool CheckMatrixBound(uint32_t input, uint64_t inputSize,
                       const size_t wasmBufferLimit) {
   mozilla::CheckedUint64 inputUpperLimit(inputSize);
   inputUpperLimit += input;
-  return inputUpperLimit.isValid() &&
-         (inputUpperLimit.value() < (uint64_t)wasmBufferLimit);
+
+  // Check bound
+  if (!inputUpperLimit.isValid() ||
+      (inputUpperLimit.value() >= (uint64_t)wasmBufferLimit)) {
+    JSContext* cx = TlsContext.get();
+    wasm::Log(cx, "Memory out of wasm bounds for matrix:%" PRIu32, input);
+    ReportError(cx, JSMSG_WASM_OUT_OF_BOUNDS);
+    return false;
+  }
+
+  return true;
 }
 
 bool CheckMatrixBoundAndAlignment(uint32_t input, uint64_t inputSize,
                                   const size_t wasmBufferLimit) {
   // Check Alignment
   if (input % ARRAY_ALIGNMENT != 0) {
+    JSContext* cx = TlsContext.get();
+    wasm::Log(cx,
+              "Unaligned access for matrix:%" PRIu32 " (should be %u aligned)",
+              input, ARRAY_ALIGNMENT);
+    ReportError(cx, JSMSG_WASM_UNALIGNED_ACCESS);
     return false;
   }
 
@@ -80,8 +99,8 @@ int32_t js::intgemm::IntrI8PrepareB(wasm::Instance* instance,
              wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
-  if (!IsValidDimension(rowsB, ROWS_B_MULTIPLIER) ||
-      !IsValidDimension(colsB, COLUMNS_B_MULTIPLIER)) {
+  if (!CheckMatrixDimension(rowsB, ROWS_B_MULTIPLIER) ||
+      !CheckMatrixDimension(colsB, COLUMNS_B_MULTIPLIER)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(
         cx, "%s: Matrix size checks failed. rowsB:%" PRIu32 "  colsB:%" PRIu32,
@@ -140,8 +159,8 @@ int32_t js::intgemm::IntrI8PrepareBFromTransposed(
              wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
-  if (!IsValidDimension(rowsB, ROWS_B_MULTIPLIER) ||
-      !IsValidDimension(colsB, COLUMNS_B_MULTIPLIER)) {
+  if (!CheckMatrixDimension(rowsB, ROWS_B_MULTIPLIER) ||
+      !CheckMatrixDimension(colsB, COLUMNS_B_MULTIPLIER)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(
         cx, "%s: Matrix size checks failed. rowsB:%" PRIu32 "  colsB:%" PRIu32,
@@ -201,8 +220,8 @@ int32_t js::intgemm::IntrI8PrepareBFromQuantizedTransposed(
              wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
-  if (!IsValidDimension(rowsB, ROWS_B_MULTIPLIER) ||
-      !IsValidDimension(colsB, COLUMNS_B_MULTIPLIER)) {
+  if (!CheckMatrixDimension(rowsB, ROWS_B_MULTIPLIER) ||
+      !CheckMatrixDimension(colsB, COLUMNS_B_MULTIPLIER)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(
         cx, "%s: Matrix size checks failed. rowsB:%" PRIu32 "  colsB:%" PRIu32,
@@ -265,8 +284,8 @@ int32_t js::intgemm::IntrI8PrepareA(wasm::Instance* instance,
              wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
-  if (!IsValidDimension(rowsA, ROWS_A_MULTIPLIER) ||
-      !IsValidDimension(colsA, COLUMNS_A_MULTIPLIER)) {
+  if (!CheckMatrixDimension(rowsA, ROWS_A_MULTIPLIER) ||
+      !CheckMatrixDimension(colsA, COLUMNS_A_MULTIPLIER)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(
         cx, "%s: Matrix size checks failed. rowsA:%" PRIu32 "  colsA:%" PRIu32,
@@ -324,8 +343,8 @@ int32_t js::intgemm::IntrI8PrepareBias(
              wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
-  if (!IsValidDimension(rowsB, ROWS_B_MULTIPLIER) ||
-      !IsValidDimension(colsB, COLUMNS_B_MULTIPLIER)) {
+  if (!CheckMatrixDimension(rowsB, ROWS_B_MULTIPLIER) ||
+      !CheckMatrixDimension(colsB, COLUMNS_B_MULTIPLIER)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(
         cx, "%s: Matrix size checks failed. rowsB:%" PRIu32 "  colsB:%" PRIu32,
@@ -393,9 +412,9 @@ int32_t js::intgemm::IntrI8MultiplyAndAddBias(
              wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
-  if (!IsValidDimension(rowsA, ROWS_A_MULTIPLIER) ||
-      !IsValidDimension(width, COLUMNS_A_MULTIPLIER) ||
-      !IsValidDimension(colsB, COLUMNS_B_MULTIPLIER)) {
+  if (!CheckMatrixDimension(rowsA, ROWS_A_MULTIPLIER) ||
+      !CheckMatrixDimension(width, COLUMNS_A_MULTIPLIER) ||
+      !CheckMatrixDimension(colsB, COLUMNS_B_MULTIPLIER)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(cx,
               "%s: Matrix size checks failed. rowsA:%" PRIu32 "  width:%" PRIu32
@@ -482,9 +501,9 @@ int32_t js::intgemm::IntrI8SelectColumnsOfB(wasm::Instance* instance,
              wasm::FailureMode::FailOnNegI32);
 
   // Size checks for matricies
-  if (!IsValidDimension(rowsB, ROWS_B_MULTIPLIER) ||
-      !IsValidDimension(colsB, COLUMNS_B_MULTIPLIER) ||
-      !IsValidDimension(sizeColIndexList, SELECTED_COLUMNS_B_MULTIPLIER)) {
+  if (!CheckMatrixDimension(rowsB, ROWS_B_MULTIPLIER) ||
+      !CheckMatrixDimension(colsB, COLUMNS_B_MULTIPLIER) ||
+      !CheckMatrixDimension(sizeColIndexList, SELECTED_COLUMNS_B_MULTIPLIER)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(cx,
               "%s: Matrix size checks failed. rowsB:%" PRIu32 "  colsB:%" PRIu32
