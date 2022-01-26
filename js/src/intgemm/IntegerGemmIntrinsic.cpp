@@ -12,6 +12,7 @@
 
 #include <utility>
 
+#include "js/HeapAPI.h"
 #include "vm/JSContext.h"
 #include "wasm/WasmInstance.h"
 #include "wasm/WasmLog.h"
@@ -38,7 +39,7 @@ size_t GetWasmRawBufferLength(const uint8_t* memBase) {
 }
 
 bool CheckMatrixDimension(uint32_t size, uint8_t sizeMultiplier) {
-  // Size should be a positive integer and an integral multiple of Multiplier
+  // A valid size is a positive integral multiple of Multiplier
   if ((size == 0) || (size % sizeMultiplier != 0)) {
     JSContext* cx = TlsContext.get();
     wasm::Log(
@@ -54,10 +55,9 @@ bool CheckMatrixBound(uint32_t input, uint64_t inputSize,
   mozilla::CheckedUint64 inputUpperLimit(inputSize);
   inputUpperLimit += input;
 
-  // Check bound
+  // Bound check fails if size overflows or it spans outside the wasm memory
   if (!inputUpperLimit.isValid() ||
       (inputUpperLimit.value() >= (uint64_t)wasmBufferSize)) {
-    // Bound check failed
     JSContext* cx = TlsContext.get();
     wasm::Log(cx, "Memory out of wasm bounds for matrix:%" PRIu32, input);
     return false;
@@ -67,9 +67,12 @@ bool CheckMatrixBound(uint32_t input, uint64_t inputSize,
 
 bool CheckMatrixBoundAndAlignment(uint32_t input, uint64_t inputSize,
                                   const size_t wasmBufferSize) {
-  // Check Alignment
+  // Alignment check: It is sufficient to check alignment for the offset rather
+  // than for the actual pointer within wasm memory (as long as following assert
+  // is satisfied)
+  static_assert(gc::PageSize >= ARRAY_ALIGNMENT,
+                "PageSize should be bigger than Alignment");
   if (input % ARRAY_ALIGNMENT != 0) {
-    // Alignment check failed
     JSContext* cx = TlsContext.get();
     wasm::Log(cx,
               "Unaligned access for matrix:%" PRIu32 " (should be %u aligned)",
