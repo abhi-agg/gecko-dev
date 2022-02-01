@@ -59,12 +59,6 @@ function testOutOfBounds() {
 
 function testSuccessfulCall() {
   // We just test that with valid arguments the intrinsic executes without any error
-  let buffer = new Int8Array(memory.buffer);
-  let size = VALID.rows * VALID.cols;
-  for (let i = 0; i < size; i++) {
-    buffer[i + VALID.input] = i + VALID.input;
-    buffer[i + VALID.output] = i + VALID.output;
-  }
   int8_prepare_b(VALID.input, VALID.scale, VALID.zeroPoint, VALID.rows, VALID.cols, VALID.output);
 }
 
