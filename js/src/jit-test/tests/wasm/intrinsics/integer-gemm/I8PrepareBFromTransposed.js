@@ -1,43 +1,54 @@
-// |jit-test| skip-if:true;
+// |jit-test| test-also=--wasm-compiler=optimizing; --wasm-moz-intgemm;
 
-// This file contains all the tests for int8_prepare_b_from_transposed intrinsic. All these
-// tests are run by main.js file in this directory.
+// This file contains all the tests for int8_prepare_b_from_transposed intrinsic. It depends
+// on the CommonTestSetup.js script which contains the common functionality
+// that is required for testing all the intrinsics.
+const COMMON_TEST_SETUP_SCRIPT = "./CommonTestSetup.js"
+
+// If tests are not running on x86/x86-64 hardware then quit
+import(COMMON_TEST_SETUP_SCRIPT).then((importedModule) => {
+  if (!importedModule.nativeX86Shared())
+    quit(0);
+});
+
+// All tests for this intrinsic as a string
+const ALL_TESTS_AS_STRING =`
 let {int8_prepare_b_from_transposed} = instance.exports;
 
-const VALID = {input: 0, scale: 1.0, zeroPoint: 0.0, rows: ROWS_B_MULTIPLIER, cols: COLUMNS_B_MULTIPLIER, output: 1024};
+const VALID = {input: 0, scale: 1.0, zeroPoint: 0.0, rows: ROWS_B_MULTIPLIER, cols: COLUMNS_B_MULTIPLIER, output: ARRAY_ALIGNMENT << 5};
 
 function testInvalidSize() {
-  var invalid;
+  let invalidSize;
 
   // row: 0
-  invalid = 0;
-  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, invalid, VALID.cols, VALID.output), WebAssembly.RuntimeError, /unreachable/);
+  invalidSize = 0;
+  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, invalidSize, VALID.cols, VALID.output), WebAssembly.RuntimeError, /unreachable/);
 
   // row: Not an integral multiple of ROWS_B_MULTIPLIER
-  invalid = ROWS_B_MULTIPLIER + 1;
-  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, invalid, VALID.cols, VALID.output), WebAssembly.RuntimeError, /unreachable/);
+  invalidSize = ROWS_B_MULTIPLIER + 1;
+  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, invalidSize, VALID.cols, VALID.output), WebAssembly.RuntimeError, /unreachable/);
 
   // col: 0
-  invalid = 0;
-  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, VALID.rows, invalid, VALID.output), WebAssembly.RuntimeError, /unreachable/);
+  invalidSize = 0;
+  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, VALID.rows, invalidSize, VALID.output), WebAssembly.RuntimeError, /unreachable/);
 
   // col: Not an integral multiple of COLUMNS_B_MULTIPLIER
-  invalid = COLUMNS_B_MULTIPLIER + 1;
-  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, VALID.rows, invalid, VALID.output), WebAssembly.RuntimeError, /unreachable/);
+  invalidSize = COLUMNS_B_MULTIPLIER + 1;
+  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, VALID.rows, invalidSize, VALID.output), WebAssembly.RuntimeError, /unreachable/);
 }
 
 function testInvalidAlignment() {
-  var invalid = ARRAY_ALIGNMENT + 1;
+  let invalidAlignment = ARRAY_ALIGNMENT + 1;
 
   // input: Not an integral multiple of ARRAY_ALIGNMENT
-  assertErrorMessage(() => int8_prepare_b_from_transposed(invalid, VALID.scale, VALID.zeroPoint, VALID.rows, VALID.cols, VALID.output), WebAssembly.RuntimeError, /index out of bounds/);
+  assertErrorMessage(() => int8_prepare_b_from_transposed(invalidAlignment, VALID.scale, VALID.zeroPoint, VALID.rows, VALID.cols, VALID.output), WebAssembly.RuntimeError, /index out of bounds/);
 
   // output: Not an integral multiple of ARRAY_ALIGNMENT
-  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, VALID.rows, VALID.cols, invalid), WebAssembly.RuntimeError, /index out of bounds/);
+  assertErrorMessage(() => int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, VALID.rows, VALID.cols, invalidAlignment), WebAssembly.RuntimeError, /index out of bounds/);
 }
 
 function testOutOfBounds() {
-  var outOfBound = PageSizeInBytes - ARRAY_ALIGNMENT;
+  let outOfBound = PageSizeInBytes - ARRAY_ALIGNMENT;
 
   // input: Out of Bounds
   assertErrorMessage(() => int8_prepare_b_from_transposed(outOfBound, VALID.scale, VALID.zeroPoint, VALID.rows, VALID.cols, VALID.output), WebAssembly.RuntimeError, /index out of bounds/);
@@ -47,12 +58,7 @@ function testOutOfBounds() {
 }
 
 function testSuccessfulCall() {
-  let buffer = new Int8Array(memory.buffer);
-  let size = VALID.rows * VALID.cols;
-  for (let i = 0; i < size; i++) {
-    buffer[i + VALID.input] = i + VALID.input;
-    buffer[i + VALID.output] = i + VALID.output;
-  }
+  // We just test that with valid arguments the intrinsic executes without any error
   int8_prepare_b_from_transposed(VALID.input, VALID.scale, VALID.zeroPoint, VALID.rows, VALID.cols, VALID.output);
 }
 
@@ -60,3 +66,9 @@ testInvalidSize();
 testInvalidAlignment();
 testOutOfBounds();
 testSuccessfulCall();
+`
+
+// Run all the tests
+import(COMMON_TEST_SETUP_SCRIPT).then((importedModule) => {
+  importedModule.runTest(importedModule.COMMON_TEST_SETUP_AS_STRING + ALL_TESTS_AS_STRING);
+});
