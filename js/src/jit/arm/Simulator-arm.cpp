@@ -2376,6 +2376,19 @@ typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int32Int32Int32)(
     int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
 typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int32Int32General)(
     int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int32Int32Int32Int32General)(
+    int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t);
+typedef int32_t (
+    *Prototype_Int32_GeneralInt32Float32Float32Int32Int32Int32General)(
+    int32_t, int32_t, float, float, int32_t, int32_t, int32_t, int32_t);
+typedef int32_t (
+    *Prototype_Int32_GeneralInt32Float32Float32Float32Float32Int32Int32Int32Int32General)(
+    int32_t, int32_t, float, float, float, float, int32_t, int32_t, int32_t,
+    int32_t, int32_t);
+typedef int32_t (
+    *Prototype_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General)(
+    int32_t, int32_t, float, float, int32_t, float, float, int32_t, float,
+    int32_t, int32_t, int32_t, int32_t, int32_t);
 typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int32General)(
     int32_t, int32_t, int32_t, int32_t, int32_t);
 typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int64)(int32_t, int32_t,
@@ -2463,6 +2476,11 @@ void Simulator::softwareInterrupt(SimInstruction* instr) {
       int32_t arg6 = stack_pointer[2];
       int32_t arg7 = stack_pointer[3];
       int32_t arg8 = stack_pointer[4];
+      int32_t arg9 = stack_pointer[5];
+      int32_t arg10 = stack_pointer[6];
+      int32_t arg11 = stack_pointer[7];
+      int32_t arg12 = stack_pointer[8];
+      int32_t arg13 = stack_pointer[9];
 
       int32_t saved_lr = get_register(lr);
       intptr_t external =

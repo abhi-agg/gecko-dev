@@ -1966,6 +1966,19 @@ typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int32Int32Int32)(
     int64_t, int32_t, int32_t, int32_t, int32_t, int32_t);
 typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int32General)(
     int64_t, int32_t, int32_t, int32_t, int64_t);
+typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int32Int32Int32Int32General)(
+    int64_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int64_t);
+typedef int32_t (
+    *Prototype_Int32_GeneralInt32Float32Float32Int32Int32Int32General)(
+    int64_t, int32_t, float, float, int32_t, int32_t, int32_t, int64_t);
+typedef int32_t (
+    *Prototype_Int32_GeneralInt32Float32Float32Float32Float32Int32Int32Int32Int32General)(
+    int64_t, int32_t, float, float, float, float, int32_t, int32_t, int32_t,
+    int32_t, int64_t);
+typedef int32_t (
+    *Prototype_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General)(
+    int64_t, int32_t, float, float, int32_t, float, float, int32_t, float,
+    int32_t, int32_t, int32_t, int32_t, int64_t);
 typedef int32_t (*Prototype_Int32_GeneralInt32Int32Int64)(int64_t, int32_t,
                                                           int32_t, int64_t);
 typedef int32_t (*Prototype_Int32_GeneralInt32Int32General)(int64_t, int32_t,
