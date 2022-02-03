@@ -2897,34 +2897,69 @@ void Simulator::softwareInterrupt(SimInstruction* instr) {
           break;
         }
         case Args_Int32_GeneralInt32Float32Float32Int32Int32Int32General: {
+          float fval0, fval1;
+          if (UseHardFpABI()) {
+            get_float_from_s_register(2, &fval0);
+            get_float_from_s_register(3, &fval1);
+          } else {
+            fval0 = mozilla::BitwiseCast<float>(arg2);
+            fval1 = mozilla::BitwiseCast<float>(arg3);
+          }
           Prototype_Int32_GeneralInt32Float32Float32Int32Int32Int32General
               target = reinterpret_cast<
                   Prototype_Int32_GeneralInt32Float32Float32Int32Int32Int32General>(
                   external);
           int64_t result =
-              target(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+              target(arg0, arg1, fval0, fval1, arg4, arg5, arg6, arg7);
           scratchVolatileRegisters(/* scratchFloat = true */);
           setCallResult(result);
           break;
         }
         case Args_Int32_GeneralInt32Float32Float32Float32Float32Int32Int32Int32Int32General: {
+          float fval0, fval1, fval2, fval3;
+          if (UseHardFpABI()) {
+            get_float_from_s_register(2, &fval0);
+            get_float_from_s_register(3, &fval1);
+            get_float_from_s_register(4, &fval2);
+            get_float_from_s_register(5, &fval3);
+          } else {
+            fval0 = mozilla::BitwiseCast<float>(arg2);
+            fval1 = mozilla::BitwiseCast<float>(arg3);
+            fval2 = mozilla::BitwiseCast<float>(arg4);
+            fval3 = mozilla::BitwiseCast<float>(arg5);
+          }
           Prototype_Int32_GeneralInt32Float32Float32Float32Float32Int32Int32Int32Int32General
               target = reinterpret_cast<
                   Prototype_Int32_GeneralInt32Float32Float32Float32Float32Int32Int32Int32Int32General>(
                   external);
-          int64_t result = target(arg0, arg1, arg2, arg3, arg4, arg5, arg6,
+          int64_t result = target(arg0, arg1, fval0, fval1, fval2, fval3, arg6,
                                   arg7, arg8, arg9, arg10);
           scratchVolatileRegisters(/* scratchFloat = true */);
           setCallResult(result);
           break;
         }
         case Args_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General: {
+          float fval0, fval1, fval2, fval3, fval4;
+          if (UseHardFpABI()) {
+            get_float_from_s_register(2, &fval0);
+            get_float_from_s_register(3, &fval1);
+            get_float_from_s_register(5, &fval2);
+            get_float_from_s_register(6, &fval3);
+            get_float_from_s_register(8, &fval4);
+          } else {
+            fval0 = mozilla::BitwiseCast<float>(arg2);
+            fval1 = mozilla::BitwiseCast<float>(arg3);
+            fval2 = mozilla::BitwiseCast<float>(arg5);
+            fval3 = mozilla::BitwiseCast<float>(arg6);
+            fval4 = mozilla::BitwiseCast<float>(arg8);
+          }
           Prototype_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General
               target = reinterpret_cast<
                   Prototype_Int32_GeneralInt32Float32Float32Int32Float32Float32Int32Float32Int32Int32Int32Int32General>(
                   external);
-          int64_t result = target(arg0, arg1, arg2, arg3, arg4, arg5, arg6,
-                                  arg7, arg8, arg9, arg10, arg11, arg12, arg13);
+          int64_t result =
+              target(arg0, arg1, fval0, fval1, arg4, fval2, fval3, arg7, fval4,
+                     arg9, arg10, arg11, arg12, arg13);
           scratchVolatileRegisters(/* scratchFloat = true */);
           setCallResult(result);
           break;
