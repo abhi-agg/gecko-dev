@@ -2,10 +2,10 @@
 
 // This file contains all the code that is common to all integer gemm intrinsics' test scripts.
 
-// Test if running on x86/x86-64 hardware or not
+// Test if running on x86/x86-64 hardware and without any simulator
 export function nativeX86Shared() {
   let conf = getBuildConfiguration();
-  if (conf.x64 || conf.x86)
+  if ((conf.x64 || conf.x86) && !conf.simulator)
       return true;
   return false;
 }
